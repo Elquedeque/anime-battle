@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crea el Personaje de Anime Más Poderoso</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --p1: #22d3ee;   /* cian neón - Jugador 1 */
+      --p2: #f472b6;   /* rosa neón - Jugador 2 */
+      --accent: #a3e635;
+    }
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: #05030d;
+      background-image:
+        radial-gradient(circle at 15% 20%, rgba(34, 211, 238, .12), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(244, 114, 182, .12), transparent 40%),
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: auto, auto, 40px 40px, 40px 40px;
+      min-height: 100vh;
+    }
+    .font-display { font-family: 'Orbitron', sans-serif; }
+    .glow-p1 { color: var(--p1); text-shadow: 0 0 8px var(--p1), 0 0 20px rgba(34,211,238,.5); }
+    .glow-p2 { color: var(--p2); text-shadow: 0 0 8px var(--p2), 0 0 20px rgba(244,114,182,.5); }
+    .glow-accent { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
+    .panel {
+      background: rgba(15, 10, 35, .75);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    }
+    .border-p1 { border-color: var(--p1); box-shadow: 0 0 18px rgba(34,211,238,.35) inset; }
+    .border-p2 { border-color: var(--p2); box-shadow: 0 0 18px rgba(244,114,182,.35) inset; }
+    .portrait {
+      border: 2px solid;
+      background: radial-gradient(circle at 50% 30%, rgba(255,255,255,.08), #0b0820 70%);
+      overflow: hidden;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .slot-btn { transition: all .2s ease; }
+    .slot-btn:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.25); }
+    .slot-btn:disabled { cursor: not-allowed; }
+    @keyframes popIn { from { opacity: 0; transform: scale(.9) translateY(10px); } to { opacity: 1; transform: none; } }
+    .pop-in { animation: popIn .45s ease both; }
+    @keyframes flicker { 0%,19%,21%,23%,55%,57%,100% { opacity: 1; } 20%,22%,56% { opacity: .4; } }
+    .flicker { animation: flicker 3s infinite; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .shake { animation: shake .3s ease 2; }
+    /* ---- Rarezas ---- */
+    .rarity-badge {
+      display: inline-block; padding: 2px 8px;
+      font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: .15em;
+      color: var(--r); border: 1px solid var(--r); text-shadow: 0 0 6px var(--r);
+      background: rgba(0,0,0,.4); white-space: nowrap;
+    }
+    .rarity-glow { line-height: 0; box-shadow: 0 0 16px var(--r), 0 0 34px rgba(0,0,0,0); }
+    @keyframes mythicHue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+    .rarity-badge.mythic { animation: mythicHue 3s linear infinite; }
+    @keyframes mythicGlow {
+      0%, 100% { box-shadow: 0 0 18px #f43f5e, 0 0 40px rgba(244,63,94,.5); }
+      33%      { box-shadow: 0 0 18px #a855f7, 0 0 40px rgba(168,85,247,.5); }
+      66%      { box-shadow: 0 0 18px #facc15, 0 0 40px rgba(250,204,21,.5); }
+    }
+    .rarity-glow.mythic { animation: mythicGlow 2.4s linear infinite; }
+    @media (prefers-reduced-motion: reduce) { .rarity-badge.mythic, .rarity-glow.mythic { animation: none; } }
+
+    /* ---- Arena de batalla ---- */
+    @keyframes slam { 0% { opacity: 0; transform: scale(3); filter: blur(8px); } 60% { opacity: 1; transform: scale(.92); filter: none; } 100% { opacity: 1; transform: scale(1); } }
+    .slam { animation: slam .55s cubic-bezier(.2,.9,.3,1.2) both; }
+    @keyframes slideL { from { opacity: 0; transform: translateX(-120%) skewX(-12deg); } to { opacity: 1; transform: none; } }
+    @keyframes slideR { from { opacity: 0; transform: translateX(120%) skewX(12deg); } to { opacity: 1; transform: none; } }
+    .slide-l { animation: slideL .6s cubic-bezier(.2,.9,.3,1.1) both; }
+    .slide-r { animation: slideR .6s cubic-bezier(.2,.9,.3,1.1) both; }
+    @keyframes vsPulse { 0%,100% { transform: scale(1); text-shadow: 0 0 10px #fff, 0 0 30px var(--accent); } 50% { transform: scale(1.18); text-shadow: 0 0 20px #fff, 0 0 60px var(--accent); } }
+    .vs { animation: vsPulse .8s ease-in-out infinite; }
+    @keyframes aura { 0%,100% { box-shadow: 0 0 12px var(--c); } 50% { box-shadow: 0 0 40px var(--c), 0 0 80px var(--c); } }
+    .aura { line-height: 0; }
+    .aura.charging { animation: aura .45s ease-in-out infinite; }
+    .fighter { transition: transform .4s ease, filter .4s ease, opacity .4s ease; }
+    .fighter.winner { transform: scale(1.1); filter: drop-shadow(0 0 18px var(--c)); }
+    .fighter.loser { transform: scale(.92) translateY(6px); filter: grayscale(1) brightness(.55); opacity: .6; }
+    @keyframes flash { from { opacity: .85; } to { opacity: 0; } }
+    .flash { position: absolute; inset: 0; background: #fff; pointer-events: none; z-index: 10; animation: flash .5s ease-out forwards; }
+    @keyframes bigShake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-10px,4px); } 40% { transform: translate(8px,-6px); } 60% { transform: translate(-6px,2px); } 80% { transform: translate(4px,-2px); } }
+    .big-shake { animation: bigShake .45s ease; }
+    @keyframes stamp { from { opacity: 0; transform: translate(-50%,-50%) scale(2.5) rotate(-12deg); } to { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(-6deg); } }
+    .stamp { position: absolute; left: 50%; top: 50%; animation: stamp .35s cubic-bezier(.2,.9,.3,1.3) forwards; }
+    .speedlines {
+      position: absolute; inset: -50%; pointer-events: none;
+      background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.06) 0deg 2deg, transparent 2deg 9deg);
+      animation: spin 24s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.7); } 100% { transform: scale(1); } }
+    .bump { animation: bump .5s ease; }
+    @media (prefers-reduced-motion: reduce) {
+      .speedlines, .vs, .aura.charging { animation: none; }
+      .big-shake { animation: none; }
+    }
+    .btn-neon {
+      font-family: 'Orbitron', sans-serif;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      transition: all .2s;
+      text-shadow: 0 0 6px var(--accent);
+      box-shadow: 0 0 12px rgba(163,230,53,.3);
+    }
+    .btn-neon:hover { background: var(--accent); color: #05030d; text-shadow: none; box-shadow: 0 0 30px rgba(163,230,53,.7); }
+  </style>
+</head>
+<body class="text-slate-200">
+  <main id="app" class="max-w-6xl mx-auto px-4 py-6 sm:py-10"></main>
+
+<script>
+/* =========================================================================
+ * 1. POOL DE PERSONAJES
+ *    Estadísticas (1-100) calibradas con UNA escala común para todos los animes:
+ *
+ *    ESCALA ENTRE OBRAS (comparables entre universos):
+ *      fuerza      100 sin límite · 95+ planeta/universo · 85-94 ciudad/isla ·
+ *                  70-84 edificio/barrio · 50-69 sobrehumano · 25-49 humano entrenado · <25 civil
+ *      velocidad   100 instantánea · 95+ más rápido que la luz · 85-94 velocidad luz/teletransporte ·
+ *                  70-84 hipersónico · 55-69 supersónico · 35-54 élite humana · <35 humano normal
+ *      resistencia aguante + durabilidad + regeneración, misma escala que la fuerza
+ *
+ *    ESCALA PROPIA DEL PERSONAJE (no depende del nivel de poder de su obra):
+ *      habilidad   técnica de combate y dominio de sus poderes
+ *      iq          IQ de combate: leer al rival, táctica e instinto en pelea
+ *                  (un genio civil como Senku o Bulma tiene IQ de combate bajo)
+ *
+ *    SOLO CUENTA EL COMBATE: talentos no combativos (deporte, ciencia, estrategia
+ *    política, aguante cómico tipo gag) no suman en ninguna estadística.
+ *    Se toma la versión más fuerte que el personaje alcanza en el canon principal.
+ * ========================================================================= */
+const CHARACTER_POOL = [
+  { name: 'Goku',              anime: 'Dragon Ball',         stats: { fuerza: 98, velocidad: 98, habilidad: 93, iq: 88, resistencia: 96 } },
+  { name: 'Vegeta',            anime: 'Dragon Ball',         stats: { fuerza: 97, velocidad: 97, habilidad: 90, iq: 85, resistencia: 96 } },
+  { name: 'Saitama',           anime: 'One Punch Man',       stats: { fuerza: 100, velocidad: 100, habilidad: 80, iq: 75, resistencia: 100 } },
+  { name: 'Naruto Uzumaki',    anime: 'Naruto',              stats: { fuerza: 91, velocidad: 90, habilidad: 85, iq: 82, resistencia: 92 } },
+  { name: 'Sasuke Uchiha',     anime: 'Naruto',              stats: { fuerza: 90, velocidad: 90, habilidad: 93, iq: 88, resistencia: 85 } },
+  { name: 'Itachi Uchiha',     anime: 'Naruto',              stats: { fuerza: 74, velocidad: 80, habilidad: 97, iq: 96, resistencia: 62 } },
+  { name: 'Monkey D. Luffy',   anime: 'One Piece',           stats: { fuerza: 91, velocidad: 84, habilidad: 82, iq: 80, resistencia: 94 } },
+  { name: 'Roronoa Zoro',      anime: 'One Piece',           stats: { fuerza: 86, velocidad: 80, habilidad: 93, iq: 80, resistencia: 92 } },
+  { name: 'Ichigo Kurosaki',   anime: 'Bleach',              stats: { fuerza: 92, velocidad: 90, habilidad: 84, iq: 74, resistencia: 88 } },
+  { name: 'Sosuke Aizen',      anime: 'Bleach',              stats: { fuerza: 92, velocidad: 88, habilidad: 97, iq: 99, resistencia: 97 } },
+  { name: 'Gojo Satoru',       anime: 'Jujutsu Kaisen',      stats: { fuerza: 90, velocidad: 88, habilidad: 99, iq: 93, resistencia: 90 } },
+  { name: 'Ryomen Sukuna',     anime: 'Jujutsu Kaisen',      stats: { fuerza: 91, velocidad: 88, habilidad: 99, iq: 96, resistencia: 90 } },
+  { name: 'Levi Ackerman',     anime: 'Attack on Titan',     stats: { fuerza: 50, velocidad: 52, habilidad: 96, iq: 92, resistencia: 42 } },
+  { name: 'Eren Jaeger',       anime: 'Attack on Titan',     stats: { fuerza: 85, velocidad: 38, habilidad: 68, iq: 65, resistencia: 82 } },
+  { name: 'Light Yagami',      anime: 'Death Note',          stats: { fuerza: 15, velocidad: 25, habilidad: 15, iq: 50, resistencia: 20 } },
+  { name: 'L Lawliet',         anime: 'Death Note',          stats: { fuerza: 28, velocidad: 35, habilidad: 35, iq: 60, resistencia: 25 } },
+  { name: 'Lelouch vi Britannia', anime: 'Code Geass',       stats: { fuerza: 8,  velocidad: 12, habilidad: 55, iq: 70, resistencia: 10 } },
+  { name: 'Senku Ishigami',    anime: 'Dr. Stone',           stats: { fuerza: 8,  velocidad: 15, habilidad: 20, iq: 40, resistencia: 15 } },
+  { name: 'Killua Zoldyck',    anime: 'Hunter x Hunter',     stats: { fuerza: 62, velocidad: 80, habilidad: 92, iq: 90, resistencia: 60 } },
+  { name: 'Meruem',            anime: 'Hunter x Hunter',     stats: { fuerza: 85, velocidad: 84, habilidad: 94, iq: 99, resistencia: 88 } },
+  { name: 'Edward Elric',      anime: 'Fullmetal Alchemist', stats: { fuerza: 45, velocidad: 45, habilidad: 90, iq: 88, resistencia: 50 } },
+  { name: 'All Might',         anime: 'My Hero Academia',    stats: { fuerza: 85, velocidad: 80, habilidad: 85, iq: 82, resistencia: 80 } },
+  { name: 'Izuku Midoriya',    anime: 'My Hero Academia',    stats: { fuerza: 84, velocidad: 80, habilidad: 82, iq: 90, resistencia: 78 } },
+  { name: 'Tanjiro Kamado',    anime: 'Demon Slayer',        stats: { fuerza: 55, velocidad: 60, habilidad: 86, iq: 78, resistencia: 70 } },
+  { name: 'Muzan Kibutsuji',   anime: 'Demon Slayer',        stats: { fuerza: 70, velocidad: 68, habilidad: 82, iq: 72, resistencia: 96 } },
+  { name: 'Anos Voldigoad',    anime: 'Maou Gakuin',         stats: { fuerza: 99, velocidad: 97, habilidad: 98, iq: 95, resistencia: 99 } },
+  { name: 'Rimuru Tempest',    anime: 'Tensura',             stats: { fuerza: 97, velocidad: 96, habilidad: 97, iq: 95, resistencia: 98 } },
+  { name: 'Ainz Ooal Gown',    anime: 'Overlord',            stats: { fuerza: 86, velocidad: 60, habilidad: 95, iq: 96, resistencia: 85 } },
+  { name: 'Spike Spiegel',     anime: 'Cowboy Bebop',        stats: { fuerza: 25, velocidad: 38, habilidad: 88, iq: 88, resistencia: 35 } },
+  { name: 'Guts',              anime: 'Berserk',             stats: { fuerza: 62, velocidad: 45, habilidad: 92, iq: 90, resistencia: 66 } },
+
+  // --- Secundarios, rivales y villanos populares ---
+  { name: 'Kakashi Hatake',    anime: 'Naruto',              stats: { fuerza: 72, velocidad: 80, habilidad: 92, iq: 95, resistencia: 62 } },
+  { name: 'Madara Uchiha',     anime: 'Naruto',              stats: { fuerza: 92, velocidad: 88, habilidad: 96, iq: 92, resistencia: 93 } },
+  { name: 'Minato Namikaze',   anime: 'Naruto',              stats: { fuerza: 72, velocidad: 93, habilidad: 94, iq: 93, resistencia: 60 } },
+  { name: 'Gaara',             anime: 'Naruto',              stats: { fuerza: 75, velocidad: 60, habilidad: 85, iq: 78, resistencia: 80 } },
+  { name: 'Pain (Nagato)',     anime: 'Naruto',              stats: { fuerza: 84, velocidad: 65, habilidad: 92, iq: 86, resistencia: 62 } },
+  { name: 'Barbablanca',       anime: 'One Piece',           stats: { fuerza: 92, velocidad: 70, habilidad: 86, iq: 84, resistencia: 90 } },
+  { name: 'Shanks',            anime: 'One Piece',           stats: { fuerza: 91, velocidad: 84, habilidad: 96, iq: 92, resistencia: 88 } },
+  { name: 'Kaido',             anime: 'One Piece',           stats: { fuerza: 91, velocidad: 74, habilidad: 82, iq: 72, resistencia: 94 } },
+  { name: 'Trafalgar Law',     anime: 'One Piece',           stats: { fuerza: 80, velocidad: 76, habilidad: 93, iq: 90, resistencia: 70 } },
+  { name: 'Sanji',             anime: 'One Piece',           stats: { fuerza: 84, velocidad: 80, habilidad: 88, iq: 80, resistencia: 84 } },
+  { name: 'Freezer',           anime: 'Dragon Ball',         stats: { fuerza: 97, velocidad: 97, habilidad: 85, iq: 80, resistencia: 96 } },
+  { name: 'Bills',             anime: 'Dragon Ball',         stats: { fuerza: 99, velocidad: 99, habilidad: 97, iq: 90, resistencia: 98 } },
+  { name: 'Piccolo',           anime: 'Dragon Ball',         stats: { fuerza: 95, velocidad: 95, habilidad: 88, iq: 94, resistencia: 92 } },
+  { name: 'Kenpachi Zaraki',   anime: 'Bleach',              stats: { fuerza: 90, velocidad: 80, habilidad: 82, iq: 78, resistencia: 92 } },
+  { name: 'Byakuya Kuchiki',   anime: 'Bleach',              stats: { fuerza: 82, velocidad: 88, habilidad: 93, iq: 86, resistencia: 75 } },
+  { name: 'Hisoka',            anime: 'Hunter x Hunter',     stats: { fuerza: 60, velocidad: 70, habilidad: 93, iq: 93, resistencia: 68 } },
+  { name: 'Isaac Netero',      anime: 'Hunter x Hunter',     stats: { fuerza: 80, velocidad: 80, habilidad: 97, iq: 96, resistencia: 60 } },
+  { name: 'Kurapika',          anime: 'Hunter x Hunter',     stats: { fuerza: 55, velocidad: 65, habilidad: 88, iq: 88, resistencia: 55 } },
+  { name: 'Toji Fushiguro',    anime: 'Jujutsu Kaisen',      stats: { fuerza: 72, velocidad: 85, habilidad: 93, iq: 96, resistencia: 70 } },
+  { name: 'Mikasa Ackerman',   anime: 'Attack on Titan',     stats: { fuerza: 46, velocidad: 50, habilidad: 90, iq: 78, resistencia: 40 } },
+  { name: 'Erwin Smith',       anime: 'Attack on Titan',     stats: { fuerza: 25, velocidad: 32, habilidad: 55, iq: 85, resistencia: 28 } },
+  { name: 'Kyojuro Rengoku',   anime: 'Demon Slayer',        stats: { fuerza: 58, velocidad: 62, habilidad: 92, iq: 84, resistencia: 72 } },
+  { name: 'Akaza',             anime: 'Demon Slayer',        stats: { fuerza: 65, velocidad: 65, habilidad: 90, iq: 86, resistencia: 90 } },
+  { name: 'Tatsumaki',         anime: 'One Punch Man',       stats: { fuerza: 88, velocidad: 75, habilidad: 94, iq: 70, resistencia: 50 } },
+  { name: 'Garou',             anime: 'One Punch Man',       stats: { fuerza: 92, velocidad: 92, habilidad: 96, iq: 94, resistencia: 90 } },
+  { name: 'Endeavor',          anime: 'My Hero Academia',    stats: { fuerza: 80, velocidad: 72, habilidad: 88, iq: 84, resistencia: 76 } },
+  { name: 'Tomura Shigaraki',  anime: 'My Hero Academia',    stats: { fuerza: 88, velocidad: 74, habilidad: 80, iq: 80, resistencia: 88 } },
+  { name: 'Roy Mustang',       anime: 'Fullmetal Alchemist', stats: { fuerza: 78, velocidad: 45, habilidad: 94, iq: 90, resistencia: 40 } },
+  { name: 'Alucard',           anime: 'Hellsing',            stats: { fuerza: 78, velocidad: 80, habilidad: 85, iq: 86, resistencia: 99 } },
+  { name: 'Dio Brando',        anime: 'JoJo\'s Bizarre Adventure', stats: { fuerza: 58, velocidad: 86, habilidad: 82, iq: 82, resistencia: 80 } },
+
+  // --- One Piece (ampliación) ---
+  { name: 'Portgas D. Ace',    anime: 'One Piece',           stats: { fuerza: 76, velocidad: 74, habilidad: 75, iq: 68, resistencia: 70 } },
+  { name: 'Sabo',              anime: 'One Piece',           stats: { fuerza: 82, velocidad: 78, habilidad: 86, iq: 80, resistencia: 80 } },
+  { name: 'Dracule Mihawk',    anime: 'One Piece',           stats: { fuerza: 88, velocidad: 82, habilidad: 99, iq: 92, resistencia: 85 } },
+  { name: 'Boa Hancock',       anime: 'One Piece',           stats: { fuerza: 76, velocidad: 78, habilidad: 85, iq: 68, resistencia: 72 } },
+  { name: 'Akainu',            anime: 'One Piece',           stats: { fuerza: 88, velocidad: 76, habilidad: 86, iq: 82, resistencia: 90 } },
+  { name: 'Aokiji',            anime: 'One Piece',           stats: { fuerza: 87, velocidad: 76, habilidad: 88, iq: 86, resistencia: 88 } },
+  { name: 'Kizaru',            anime: 'One Piece',           stats: { fuerza: 84, velocidad: 92, habilidad: 84, iq: 78, resistencia: 84 } },
+  { name: 'Monkey D. Garp',    anime: 'One Piece',           stats: { fuerza: 89, velocidad: 78, habilidad: 88, iq: 84, resistencia: 88 } },
+  { name: 'Big Mom',           anime: 'One Piece',           stats: { fuerza: 88, velocidad: 60, habilidad: 78, iq: 55, resistencia: 92 } },
+  { name: 'Barbanegra',        anime: 'One Piece',           stats: { fuerza: 89, velocidad: 68, habilidad: 78, iq: 86, resistencia: 86 } },
+  { name: 'Donquixote Doflamingo', anime: 'One Piece',       stats: { fuerza: 80, velocidad: 78, habilidad: 90, iq: 88, resistencia: 80 } },
+  { name: 'Crocodile',         anime: 'One Piece',           stats: { fuerza: 72, velocidad: 65, habilidad: 82, iq: 82, resistencia: 74 } },
+  { name: 'Charlotte Katakuri', anime: 'One Piece',          stats: { fuerza: 84, velocidad: 80, habilidad: 92, iq: 95, resistencia: 86 } },
+  { name: 'Nico Robin',        anime: 'One Piece',           stats: { fuerza: 50, velocidad: 55, habilidad: 82, iq: 75, resistencia: 45 } },
+  { name: 'Marco',             anime: 'One Piece',           stats: { fuerza: 80, velocidad: 82, habilidad: 85, iq: 82, resistencia: 90 } },
+
+  // --- Tokyo Ghoul ---
+  { name: 'Ken Kaneki',        anime: 'Tokyo Ghoul',         stats: { fuerza: 72, velocidad: 70, habilidad: 84, iq: 82, resistencia: 85 } },
+  { name: 'Touka Kirishima',   anime: 'Tokyo Ghoul',         stats: { fuerza: 45, velocidad: 65, habilidad: 78, iq: 68, resistencia: 52 } },
+  { name: 'Kishou Arima',      anime: 'Tokyo Ghoul',         stats: { fuerza: 55, velocidad: 70, habilidad: 99, iq: 98, resistencia: 60 } },
+  { name: 'Rize Kamishiro',    anime: 'Tokyo Ghoul',         stats: { fuerza: 62, velocidad: 62, habilidad: 65, iq: 55, resistencia: 75 } },
+  { name: 'Juuzou Suzuya',     anime: 'Tokyo Ghoul',         stats: { fuerza: 48, velocidad: 68, habilidad: 88, iq: 70, resistencia: 60 } },
+
+  // --- Variados ---
+  { name: 'Jotaro Kujo',       anime: 'JoJo\'s Bizarre Adventure', stats: { fuerza: 55, velocidad: 85, habilidad: 90, iq: 95, resistencia: 65 } },
+  { name: 'Natsu Dragneel',    anime: 'Fairy Tail',          stats: { fuerza: 78, velocidad: 68, habilidad: 76, iq: 66, resistencia: 80 } },
+  { name: 'Asta',              anime: 'Black Clover',        stats: { fuerza: 78, velocidad: 74, habilidad: 80, iq: 72, resistencia: 80 } },
+  { name: 'Makima',            anime: 'Chainsaw Man',        stats: { fuerza: 80, velocidad: 60, habilidad: 95, iq: 90, resistencia: 97 } },
+  { name: 'Denji',             anime: 'Chainsaw Man',        stats: { fuerza: 72, velocidad: 62, habilidad: 60, iq: 70, resistencia: 95 } },
+  { name: 'Shigeo Kageyama (Mob)', anime: 'Mob Psycho 100',  stats: { fuerza: 88, velocidad: 60, habilidad: 88, iq: 55, resistencia: 72 } },
+  { name: 'Escanor',           anime: 'Nanatsu no Taizai',   stats: { fuerza: 92, velocidad: 60, habilidad: 72, iq: 58, resistencia: 88 } },
+  { name: 'Kirito',            anime: 'Sword Art Online',    stats: { fuerza: 45, velocidad: 62, habilidad: 90, iq: 86, resistencia: 50 } },
+  { name: 'Accelerator',       anime: 'Toaru Majutsu no Index', stats: { fuerza: 86, velocidad: 80, habilidad: 90, iq: 90, resistencia: 99 } },
+  { name: 'Yusuke Urameshi',   anime: 'Yu Yu Hakusho',       stats: { fuerza: 80, velocidad: 78, habilidad: 84, iq: 82, resistencia: 82 } },
+
+  // --- Naruto (ampliación) ---
+  { name: 'Jiraiya',           anime: 'Naruto',              stats: { fuerza: 75, velocidad: 76, habilidad: 90, iq: 90, resistencia: 72 } },
+  { name: 'Tsunade',           anime: 'Naruto',              stats: { fuerza: 82, velocidad: 68, habilidad: 85, iq: 80, resistencia: 90 } },
+  { name: 'Orochimaru',        anime: 'Naruto',              stats: { fuerza: 72, velocidad: 74, habilidad: 92, iq: 90, resistencia: 85 } },
+  { name: 'Hashirama Senju',   anime: 'Naruto',              stats: { fuerza: 90, velocidad: 86, habilidad: 95, iq: 88, resistencia: 94 } },
+  { name: 'Tobirama Senju',    anime: 'Naruto',              stats: { fuerza: 72, velocidad: 90, habilidad: 93, iq: 94, resistencia: 68 } },
+  { name: 'Obito Uchiha',      anime: 'Naruto',              stats: { fuerza: 90, velocidad: 86, habilidad: 90, iq: 84, resistencia: 90 } },
+  { name: 'Might Guy',         anime: 'Naruto',              stats: { fuerza: 89, velocidad: 92, habilidad: 91, iq: 83, resistencia: 75 } },
+  { name: 'Rock Lee',          anime: 'Naruto',              stats: { fuerza: 62, velocidad: 75, habilidad: 82, iq: 65, resistencia: 65 } },
+  { name: 'Neji Hyuga',        anime: 'Naruto',              stats: { fuerza: 55, velocidad: 68, habilidad: 86, iq: 78, resistencia: 55 } },
+  { name: 'Hinata Hyuga',      anime: 'Naruto',              stats: { fuerza: 55, velocidad: 62, habilidad: 75, iq: 62, resistencia: 50 } },
+  { name: 'Shikamaru Nara',    anime: 'Naruto',              stats: { fuerza: 45, velocidad: 52, habilidad: 75, iq: 99, resistencia: 45 } },
+  { name: 'Sakura Haruno',     anime: 'Naruto',              stats: { fuerza: 80, velocidad: 65, habilidad: 80, iq: 72, resistencia: 85 } },
+  { name: 'Kisame Hoshigaki',  anime: 'Naruto',              stats: { fuerza: 80, velocidad: 65, habilidad: 82, iq: 78, resistencia: 86 } },
+  { name: 'Kaguya Otsutsuki',  anime: 'Naruto',              stats: { fuerza: 93, velocidad: 86, habilidad: 90, iq: 65, resistencia: 95 } },
+  { name: 'Hiruzen Sarutobi',  anime: 'Naruto',              stats: { fuerza: 70, velocidad: 66, habilidad: 95, iq: 92, resistencia: 55 } },
+  { name: 'Killer Bee',        anime: 'Naruto',              stats: { fuerza: 85, velocidad: 76, habilidad: 88, iq: 84, resistencia: 86 } },
+  { name: 'Deidara',           anime: 'Naruto',              stats: { fuerza: 78, velocidad: 68, habilidad: 88, iq: 76, resistencia: 50 } },
+  { name: 'Shisui Uchiha',     anime: 'Naruto',              stats: { fuerza: 70, velocidad: 82, habilidad: 95, iq: 92, resistencia: 55 } },
+  { name: 'Zabuza Momochi',    anime: 'Naruto',              stats: { fuerza: 62, velocidad: 68, habilidad: 82, iq: 76, resistencia: 62 } },
+  { name: 'Kabuto Yakushi',    anime: 'Naruto',              stats: { fuerza: 80, velocidad: 72, habilidad: 90, iq: 88, resistencia: 85 } },
+
+  // --- Hunter x Hunter (ampliación) ---
+  { name: 'Gon Freecss',       anime: 'Hunter x Hunter',     stats: { fuerza: 80, velocidad: 72, habilidad: 70, iq: 60, resistencia: 70 } },
+  { name: 'Chrollo Lucilfer',  anime: 'Hunter x Hunter',     stats: { fuerza: 60, velocidad: 70, habilidad: 95, iq: 96, resistencia: 58 } },
+  { name: 'Illumi Zoldyck',    anime: 'Hunter x Hunter',     stats: { fuerza: 60, velocidad: 72, habilidad: 90, iq: 88, resistencia: 68 } },
+  { name: 'Feitan',            anime: 'Hunter x Hunter',     stats: { fuerza: 68, velocidad: 78, habilidad: 88, iq: 80, resistencia: 62 } },
+  { name: 'Neferpitou',        anime: 'Hunter x Hunter',     stats: { fuerza: 78, velocidad: 82, habilidad: 90, iq: 82, resistencia: 75 } },
+  { name: 'Ging Freecss',      anime: 'Hunter x Hunter',     stats: { fuerza: 72, velocidad: 72, habilidad: 95, iq: 96, resistencia: 68 } },
+  { name: 'Silva Zoldyck',     anime: 'Hunter x Hunter',     stats: { fuerza: 75, velocidad: 74, habilidad: 92, iq: 90, resistencia: 78 } },
+  { name: 'Zeno Zoldyck',      anime: 'Hunter x Hunter',     stats: { fuerza: 72, velocidad: 72, habilidad: 93, iq: 95, resistencia: 62 } },
+  { name: 'Biscuit Krueger',   anime: 'Hunter x Hunter',     stats: { fuerza: 72, velocidad: 68, habilidad: 90, iq: 92, resistencia: 70 } },
+  { name: 'Leorio Paradinight', anime: 'Hunter x Hunter',    stats: { fuerza: 42, velocidad: 42, habilidad: 45, iq: 50, resistencia: 45 } },
+
+  // --- Black Clover ---
+  { name: 'Yuno',              anime: 'Black Clover',        stats: { fuerza: 80, velocidad: 82, habilidad: 88, iq: 80, resistencia: 70 } },
+  { name: 'Yami Sukehiro',     anime: 'Black Clover',        stats: { fuerza: 82, velocidad: 76, habilidad: 92, iq: 86, resistencia: 80 } },
+  { name: 'Noelle Silva',      anime: 'Black Clover',        stats: { fuerza: 74, velocidad: 62, habilidad: 82, iq: 65, resistencia: 70 } },
+  { name: 'Julius Novachrono', anime: 'Black Clover',        stats: { fuerza: 70, velocidad: 90, habilidad: 96, iq: 96, resistencia: 60 } },
+  { name: 'Mereoleona Vermillion', anime: 'Black Clover',    stats: { fuerza: 80, velocidad: 74, habilidad: 85, iq: 72, resistencia: 86 } },
+  { name: 'Lucius Zogratis',   anime: 'Black Clover',        stats: { fuerza: 90, velocidad: 86, habilidad: 95, iq: 96, resistencia: 92 } },
+  { name: 'Luck Voltia',       anime: 'Black Clover',        stats: { fuerza: 62, velocidad: 80, habilidad: 82, iq: 74, resistencia: 58 } },
+  { name: 'Fuegoleon Vermillion', anime: 'Black Clover',     stats: { fuerza: 74, velocidad: 62, habilidad: 85, iq: 82, resistencia: 72 } },
+  { name: 'Dante Zogratis',    anime: 'Black Clover',        stats: { fuerza: 80, velocidad: 62, habilidad: 85, iq: 72, resistencia: 95 } },
+  { name: 'Nacht Faust',       anime: 'Black Clover',        stats: { fuerza: 75, velocidad: 72, habilidad: 90, iq: 92, resistencia: 70 } },
+
+  // --- Solo Leveling ---
+  { name: 'Sung Jin-Woo',      anime: 'Solo Leveling',       stats: { fuerza: 96, velocidad: 96, habilidad: 94, iq: 92, resistencia: 94 } },
+  { name: 'Cha Hae-In',        anime: 'Solo Leveling',       stats: { fuerza: 65, velocidad: 72, habilidad: 92, iq: 82, resistencia: 60 } },
+  { name: 'Thomas Andre',      anime: 'Solo Leveling',       stats: { fuerza: 78, velocidad: 62, habilidad: 80, iq: 72, resistencia: 90 } },
+  { name: 'Igris',             anime: 'Solo Leveling',       stats: { fuerza: 80, velocidad: 78, habilidad: 93, iq: 82, resistencia: 80 } },
+  { name: 'Beru',              anime: 'Solo Leveling',       stats: { fuerza: 85, velocidad: 86, habilidad: 85, iq: 75, resistencia: 85 } },
+
+  // --- My Hero Academia (ampliación) ---
+  { name: 'Katsuki Bakugo',    anime: 'My Hero Academia',    stats: { fuerza: 76, velocidad: 72, habilidad: 88, iq: 88, resistencia: 70 } },
+  { name: 'Shoto Todoroki',    anime: 'My Hero Academia',    stats: { fuerza: 76, velocidad: 60, habilidad: 86, iq: 80, resistencia: 68 } },
+  { name: 'All For One',       anime: 'My Hero Academia',    stats: { fuerza: 85, velocidad: 72, habilidad: 92, iq: 92, resistencia: 86 } },
+  { name: 'Hawks',             anime: 'My Hero Academia',    stats: { fuerza: 50, velocidad: 82, habilidad: 88, iq: 90, resistencia: 50 } },
+  { name: 'Shota Aizawa',      anime: 'My Hero Academia',    stats: { fuerza: 30, velocidad: 45, habilidad: 86, iq: 92, resistencia: 40 } },
+  { name: 'Ochaco Uraraka',    anime: 'My Hero Academia',    stats: { fuerza: 35, velocidad: 45, habilidad: 70, iq: 68, resistencia: 45 } },
+  { name: 'Mirio Togata',      anime: 'My Hero Academia',    stats: { fuerza: 55, velocidad: 60, habilidad: 92, iq: 90, resistencia: 65 } },
+  { name: 'Dabi',              anime: 'My Hero Academia',    stats: { fuerza: 80, velocidad: 50, habilidad: 75, iq: 72, resistencia: 55 } },
+  { name: 'Himiko Toga',       anime: 'My Hero Academia',    stats: { fuerza: 25, velocidad: 45, habilidad: 75, iq: 70, resistencia: 35 } },
+  { name: 'Overhaul',          anime: 'My Hero Academia',    stats: { fuerza: 62, velocidad: 55, habilidad: 90, iq: 82, resistencia: 75 } },
+
+  // --- Katekyo Hitman Reborn! ---
+  { name: 'Tsunayoshi Sawada', anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 80, velocidad: 80, habilidad: 88, iq: 88, resistencia: 78 } },
+  { name: 'Reborn',            anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 72, velocidad: 80, habilidad: 97, iq: 98, resistencia: 70 } },
+  { name: 'Kyoya Hibari',      anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 62, velocidad: 72, habilidad: 90, iq: 82, resistencia: 72 } },
+  { name: 'Hayato Gokudera',   anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 60, velocidad: 60, habilidad: 82, iq: 80, resistencia: 55 } },
+  { name: 'Takeshi Yamamoto',  anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 62, velocidad: 72, habilidad: 90, iq: 84, resistencia: 65 } },
+  { name: 'Xanxus',            anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 80, velocidad: 72, habilidad: 88, iq: 82, resistencia: 78 } },
+  { name: 'Byakuran',          anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 85, velocidad: 82, habilidad: 92, iq: 92, resistencia: 85 } },
+  { name: 'Mukuro Rokudo',     anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 60, velocidad: 65, habilidad: 95, iq: 94, resistencia: 60 } },
+  { name: 'Superbi Squalo',    anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 60, velocidad: 72, habilidad: 90, iq: 78, resistencia: 68 } },
+  { name: 'Dino Cavallone',    anime: 'Katekyo Hitman Reborn!', stats: { fuerza: 58, velocidad: 65, habilidad: 80, iq: 80, resistencia: 65 } },
+
+  // --- Devilman ---
+  { name: 'Akira Fudo',        anime: 'Devilman',            stats: { fuerza: 85, velocidad: 80, habilidad: 75, iq: 70, resistencia: 88 } },
+  { name: 'Ryo Asuka (Satán)', anime: 'Devilman',            stats: { fuerza: 99, velocidad: 95, habilidad: 92, iq: 95, resistencia: 98 } },
+  { name: 'Sirene',            anime: 'Devilman',            stats: { fuerza: 72, velocidad: 80, habilidad: 82, iq: 75, resistencia: 85 } },
+  { name: 'Kaim',              anime: 'Devilman',            stats: { fuerza: 70, velocidad: 65, habilidad: 72, iq: 70, resistencia: 80 } },
+  { name: 'Psycho Jenny',      anime: 'Devilman',            stats: { fuerza: 50, velocidad: 60, habilidad: 92, iq: 88, resistencia: 55 } },
+
+  // --- Hajime no Ippo (boxeadores humanos: técnica alta, poder limitado) ---
+  { name: 'Ippo Makunouchi',   anime: 'Hajime no Ippo',      stats: { fuerza: 42, velocidad: 44, habilidad: 82, iq: 78, resistencia: 50 } },
+  { name: 'Mamoru Takamura',   anime: 'Hajime no Ippo',      stats: { fuerza: 48, velocidad: 48, habilidad: 94, iq: 88, resistencia: 52 } },
+  { name: 'Ichiro Miyata',     anime: 'Hajime no Ippo',      stats: { fuerza: 35, velocidad: 48, habilidad: 88, iq: 85, resistencia: 35 } },
+  { name: 'Takeshi Sendo',     anime: 'Hajime no Ippo',      stats: { fuerza: 42, velocidad: 42, habilidad: 80, iq: 75, resistencia: 48 } },
+  { name: 'Ryo Mashiba',       anime: 'Hajime no Ippo',      stats: { fuerza: 40, velocidad: 46, habilidad: 82, iq: 78, resistencia: 42 } },
+  { name: 'Eiji Date',         anime: 'Hajime no Ippo',      stats: { fuerza: 38, velocidad: 43, habilidad: 90, iq: 93, resistencia: 45 } },
+  { name: 'Ricardo Martinez',  anime: 'Hajime no Ippo',      stats: { fuerza: 42, velocidad: 47, habilidad: 95, iq: 94, resistencia: 50 } },
+  { name: 'Bryan Hawk',        anime: 'Hajime no Ippo',      stats: { fuerza: 44, velocidad: 46, habilidad: 88, iq: 82, resistencia: 45 } },
+  { name: 'Volg Zangief',      anime: 'Hajime no Ippo',      stats: { fuerza: 40, velocidad: 44, habilidad: 88, iq: 85, resistencia: 48 } },
+  { name: 'Genji Kamogawa',    anime: 'Hajime no Ippo',      stats: { fuerza: 30, velocidad: 30, habilidad: 90, iq: 95, resistencia: 30 } },
+
+  // --- Record of Ragnarok (anime) ---
+  { name: 'Zeus',              anime: 'Record of Ragnarok',  stats: { fuerza: 90, velocidad: 90, habilidad: 92, iq: 92, resistencia: 92 } },
+  { name: 'Thor',              anime: 'Record of Ragnarok',  stats: { fuerza: 90, velocidad: 82, habilidad: 88, iq: 85, resistencia: 90 } },
+  { name: 'Poseidón',          anime: 'Record of Ragnarok',  stats: { fuerza: 86, velocidad: 86, habilidad: 92, iq: 85, resistencia: 82 } },
+  { name: 'Shiva',             anime: 'Record of Ragnarok',  stats: { fuerza: 90, velocidad: 86, habilidad: 88, iq: 84, resistencia: 88 } },
+  { name: 'Heracles',          anime: 'Record of Ragnarok',  stats: { fuerza: 86, velocidad: 78, habilidad: 86, iq: 80, resistencia: 92 } },
+  { name: 'Buda',              anime: 'Record of Ragnarok',  stats: { fuerza: 86, velocidad: 84, habilidad: 92, iq: 97, resistencia: 88 } },
+  { name: 'Lü Bu',             anime: 'Record of Ragnarok',  stats: { fuerza: 86, velocidad: 80, habilidad: 90, iq: 80, resistencia: 82 } },
+  { name: 'Adán',              anime: 'Record of Ragnarok',  stats: { fuerza: 84, velocidad: 84, habilidad: 92, iq: 90, resistencia: 80 } },
+  { name: 'Sasaki Kojiro',     anime: 'Record of Ragnarok',  stats: { fuerza: 78, velocidad: 80, habilidad: 97, iq: 98, resistencia: 72 } },
+  { name: 'Jack el Destripador', anime: 'Record of Ragnarok', stats: { fuerza: 70, velocidad: 76, habilidad: 90, iq: 95, resistencia: 65 } },
+
+  // --- Tengen Toppa Gurren Lagann (pilotando sus mechas) ---
+  { name: 'Simon',             anime: 'Gurren Lagann',       stats: { fuerza: 100, velocidad: 99, habilidad: 85, iq: 80, resistencia: 98 } },
+  { name: 'Kamina',            anime: 'Gurren Lagann',       stats: { fuerza: 72, velocidad: 62, habilidad: 68, iq: 72, resistencia: 75 } },
+  { name: 'Yoko Littner',      anime: 'Gurren Lagann',       stats: { fuerza: 40, velocidad: 50, habilidad: 90, iq: 82, resistencia: 40 } },
+  { name: 'Lordgenome',        anime: 'Gurren Lagann',       stats: { fuerza: 88, velocidad: 80, habilidad: 90, iq: 92, resistencia: 90 } },
+  { name: 'Anti-Espiral',      anime: 'Gurren Lagann',       stats: { fuerza: 100, velocidad: 99, habilidad: 95, iq: 95, resistencia: 99 } },
+
+  // --- Baki ---
+  { name: 'Baki Hanma',        anime: 'Baki',                stats: { fuerza: 58, velocidad: 55, habilidad: 93, iq: 88, resistencia: 62 } },
+  { name: 'Yujiro Hanma',      anime: 'Baki',                stats: { fuerza: 68, velocidad: 58, habilidad: 95, iq: 92, resistencia: 68 } },
+  { name: 'Jack Hanma',        anime: 'Baki',                stats: { fuerza: 62, velocidad: 50, habilidad: 80, iq: 70, resistencia: 62 } },
+  { name: 'Doppo Orochi',      anime: 'Baki',                stats: { fuerza: 52, velocidad: 48, habilidad: 92, iq: 88, resistencia: 55 } },
+  { name: 'Pickle',            anime: 'Baki',                stats: { fuerza: 64, velocidad: 52, habilidad: 72, iq: 65, resistencia: 70 } },
+
+  // --- Civiles (sin poderes de combate) ---
+  { name: 'Bulma',             anime: 'Dragon Ball',         stats: { fuerza: 5,  velocidad: 15, habilidad: 15, iq: 15, resistencia: 10 } },
+  { name: 'Mr. Satán',         anime: 'Dragon Ball',         stats: { fuerza: 30, velocidad: 30, habilidad: 45, iq: 40, resistencia: 40 } },
+  { name: 'Anya Forger',       anime: 'Spy x Family',        stats: { fuerza: 3,  velocidad: 15, habilidad: 15, iq: 30, resistencia: 8 } },
+  { name: 'Shoyo Hinata',      anime: 'Haikyuu!!',           stats: { fuerza: 25, velocidad: 40, habilidad: 10, iq: 15, resistencia: 35 } },
+  { name: 'Tetsuya Kuroko',    anime: 'Kuroko no Basket',    stats: { fuerza: 18, velocidad: 30, habilidad: 15, iq: 20, resistencia: 20 } },
+  { name: 'Rintarou Okabe',    anime: 'Steins;Gate',         stats: { fuerza: 12, velocidad: 20, habilidad: 10, iq: 20, resistencia: 20 } },
+  { name: 'Kaguya Shinomiya',  anime: 'Kaguya-sama: Love is War', stats: { fuerza: 18, velocidad: 30, habilidad: 35, iq: 35, resistencia: 20 } },
+  { name: 'Kousei Arima',      anime: 'Shigatsu wa Kimi no Uso', stats: { fuerza: 10, velocidad: 20, habilidad: 5,  iq: 10, resistencia: 15 } },
+  { name: 'Taki Tachibana',    anime: 'Kimi no Na wa',       stats: { fuerza: 20, velocidad: 28, habilidad: 10, iq: 15, resistencia: 25 } },
+  { name: 'Shinnosuke Nohara', anime: 'Crayon Shin-chan',    stats: { fuerza: 4,  velocidad: 15, habilidad: 10, iq: 15, resistencia: 12 } },
+];
+
+/* =========================================================================
+ * 2. CONFIGURACIÓN DE CATEGORÍAS
+ * ========================================================================= */
+const CATEGORIES = [
+  { key: 'fuerza',      label: 'Fuerza',      icon: '💪' },
+  { key: 'velocidad',   label: 'Velocidad',   icon: '⚡' },
+  { key: 'habilidad',   label: 'Habilidad',   icon: '🎯' },
+  { key: 'iq',          label: 'IQ de combate', icon: '🧠' }, // táctica e instinto en pelea, no inteligencia general
+  { key: 'resistencia', label: 'Resistencia', icon: '🛡️' },
+];
+const TOTAL_ROUNDS = CATEGORIES.length;
+
+/* =========================================================================
+ * 2b. RAREZAS
+ *     Se calculan a partir de la suma de las 5 estadísticas (máx. 500).
+ *     Ordenadas de mayor a menor: gana el primer umbral que se alcance.
+ * ========================================================================= */
+const RARITIES = [
+  { key: 'mitico',     label: 'Mítico',     min: 455, color: '#f43f5e', icon: '✦' },
+  { key: 'legendario', label: 'Legendario', min: 425, color: '#facc15', icon: '★' },
+  { key: 'raro',       label: 'Raro',       min: 390, color: '#60a5fa', icon: '◆' },
+  { key: 'comun',      label: 'Común',      min: 0,   color: '#94a3b8', icon: '●' },
+];
+
+const statTotal = (ch) => CATEGORIES.reduce((sum, c) => sum + ch.stats[c.key], 0);
+const getRarity = (total) => RARITIES.find((r) => total >= r.min);
+
+CHARACTER_POOL.forEach((c) => { c.rarity = getRarity(statTotal(c)); });
+const PLAYER_META = [
+  { id: 0, name: 'Jugador 1', glow: 'glow-p1', border: 'border-p1', color: 'var(--p1)' },
+  // En modo 1 jugador el segundo puesto lo ocupa la CPU (el nombre se calcula según el modo)
+  { id: 1, get name() { return state.mode === 'solo' ? 'CPU' : 'Jugador 2'; }, glow: 'glow-p2', border: 'border-p2', color: 'var(--p2)' },
+];
+
+/* =========================================================================
+ * 2c. MODO 1 JUGADOR: dificultades de la CPU
+ *     noise:   error (±) con el que la CPU "recuerda" cada estadística
+ *     blunder: probabilidad de colocar la carta en un slot al azar
+ *     jokers:  si usa descarte y robo
+ * ========================================================================= */
+const DIFFICULTIES = {
+  facil:   { label: 'Fácil',   noise: 25, blunder: 0.3, jokers: false },
+  normal:  { label: 'Normal',  noise: 12, blunder: 0.1, jokers: true },
+  dificil: { label: 'Difícil', noise: 4,  blunder: 0,   jokers: true },
+};
+
+/* Opciones del menú inicial (no forman parte de la partida) */
+const menu = { difficulty: 'normal' };
+function setMenuDifficulty(d) { menu.difficulty = d; render(); }
+
+/* Récord contra la CPU guardado en el navegador (si el almacenamiento falla, se ignora) */
+const Record = {
+  KEY: 'animeDraft.cpuRecord',
+  load() {
+    try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; } catch { return {}; }
+  },
+  add(difficulty, winner) {
+    const all = this.load();
+    const r = all[difficulty] || { w: 0, l: 0, d: 0 };
+    if (winner === 0) r.w++; else if (winner === 1) r.l++; else r.d++;
+    all[difficulty] = r;
+    try { localStorage.setItem(this.KEY, JSON.stringify(all)); } catch { /* sin almacenamiento */ }
+  },
+  text(difficulty) {
+    const r = this.load()[difficulty];
+    return r ? `${r.w}V · ${r.l}D${r.d ? ` · ${r.d}E` : ''}` : 'sin partidas';
+  },
+};
+
+/* =========================================================================
+ * 3. ESTADO DEL JUEGO
+ *    Fuente única de verdad. Toda mutación pasa por las funciones de Game.
+ * ========================================================================= */
+const createInitialState = (mode = 'duo', difficulty = 'normal') => ({
+  phase: 'start',          // 'start' | 'draft' | 'battle' | 'result'
+  mode,                    // 'duo' = 2 jugadores en la misma pantalla · 'solo' = contra la CPU
+  difficulty,              // clave de DIFFICULTIES (solo se usa en modo 'solo')
+  cpu: null,               // modo solo: estadísticas tal como las "percibe" la CPU
+  round: 1,                // 1..5
+  currentPlayer: 0,        // 0 = J1, 1 = J2
+  deck: [],                // personajes restantes (barajados, sin repetir)
+  currentCharacter: null,  // personaje ofrecido al jugador en turno
+  players: [
+    // slots: { fuerza: personaje, ... } · comodines de un solo uso por partida
+    { slots: {}, steals: 1, discards: 1 },
+    { slots: {}, steals: 1, discards: 1 },
+  ],
+  steal: null,             // robo en curso: { targetKey: null | categoría del rival }
+  stolenIds: [],           // ids ya robados: no se pueden volver a robar
+  notice: null,            // aviso de la última acción especial (robo/descarte)
+  battle: { results: [], wins: [0, 0], winner: null },
+  busy: false,             // bloquea entradas durante animaciones
+});
+
+let state = createInitialState();
+
+/* =========================================================================
+ * 3b. IMÁGENES LOCALES
+ *     Cada personaje busca su retrato en img/<slug>.jpg (luego .png y .webp).
+ *     Si no existe ningún archivo, se muestra un avatar neón con iniciales.
+ * ========================================================================= */
+const IMAGE_DIR = "img/";
+const IMAGE_EXTENSIONS = ["jpg", "png", "webp"];
+
+/** "Monkey D. Luffy" -> "monkey-d-luffy" */
+const slugify = (name) => name
+  .normalize("NFD").replace(/[̀-ͯ]/g, "")
+  .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+CHARACTER_POOL.forEach((c, i) => {
+  c.id = i;
+  c.slug = slugify(c.name);
+});
+
+/* slug -> índice de extensión que cargó, o -1 si no hay imagen (evita reintentos al repintar) */
+const imageResolved = new Map();
+
+function imageLoaded(img) {
+  imageResolved.set(img.dataset.slug, Number(img.dataset.ext));
+}
+
+/** Si una extensión falla, prueba la siguiente; si no queda ninguna, deja el avatar. */
+function nextImageExt(img) {
+  const i = Number(img.dataset.ext) + 1;
+  if (i >= IMAGE_EXTENSIONS.length) { imageResolved.set(img.dataset.slug, -1); img.remove(); return; }
+  img.dataset.ext = i;
+  img.src = IMAGE_DIR + img.dataset.slug + "." + IMAGE_EXTENSIONS[i];
+}
+
+/* Utilidad: barajado Fisher-Yates (no muta el original) */
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/* =========================================================================
+ * 4. LÓGICA DEL DRAFT
+ * ========================================================================= */
+const Game = {
+  start(mode = 'duo', difficulty = 'normal') {
+    state = createInitialState(mode, difficulty);
+    state.phase = 'draft';
+    state.deck = shuffle(CHARACTER_POOL);
+    if (mode === 'solo') state.cpu = CPU.buildPerception(difficulty);
+    this.drawCharacter();
+    render();
+  },
+
+  /** Modo solo: ¿le toca a la CPU? (la CPU siempre es el jugador 2) */
+  isCpuTurn: () => state.mode === 'solo' && state.currentPlayer === 1,
+
+  /** Las acciones del humano se ignoran durante animaciones o el turno de la CPU. */
+  blocked(byCpu) {
+    return state.phase !== 'draft' || (!byCpu && (state.busy || this.isCpuTurn()));
+  },
+
+  /** Saca el siguiente personaje del mazo para el jugador en turno. */
+  drawCharacter() {
+    state.currentCharacter = state.deck.pop();
+  },
+
+  /** Atajos del jugador en turno y su rival. */
+  me: () => state.players[state.currentPlayer],
+  rival: () => state.players[1 - state.currentPlayer],
+
+  /**
+   * El jugador en turno coloca un personaje en un slot vacío:
+   * - normal: el personaje que le ha tocado.
+   * - robando: el personaje robado (y el rival recibe la carta actual a cambio).
+   */
+  assignSlot(categoryKey, byCpu = false) {
+    if (this.blocked(byCpu)) return;
+    const player = this.me();
+    if (player.slots[categoryKey]) return; // slot ya usado: ignorar
+
+    // Si la CPU descartó antes en este turno, su aviso se conserva delante
+    const prefix = byCpu && state.notice ? state.notice + ' ' : '';
+    if (state.steal) {
+      if (!state.steal.targetKey) return; // aún no ha elegido a quién robar
+      this.completeSteal(categoryKey);
+    } else {
+      player.slots[categoryKey] = state.currentCharacter;
+      const cat = CATEGORIES.find((c) => c.key === categoryKey);
+      state.notice = byCpu ? `🤖 CPU colocó a ${state.currentCharacter.name} en ${cat.icon} ${cat.label}.` : null;
+    }
+    if (byCpu) state.notice = prefix + state.notice;
+    this.endTurn();
+  },
+
+  /* ---------- Comodín: descarte ---------- */
+
+  /** Descarta la carta actual y roba otra del mazo (1 vez por partida). */
+  discard(byCpu = false) {
+    if (this.blocked(byCpu) || state.steal) return;
+    const player = this.me();
+    if (player.discards < 1) return;
+    player.discards--;
+    const old = state.currentCharacter;
+    this.drawCharacter();
+    state.notice = `🎲 ${PLAYER_META[state.currentPlayer].name} descartó a ${old.name}.`;
+    render();
+  },
+
+  /* ---------- Comodín: robo ---------- */
+
+  /** Personajes del rival que se pueden robar (los ya robados quedan bloqueados). */
+  stealableKeys() {
+    const slots = this.rival().slots;
+    return CATEGORIES.map((c) => c.key)
+      .filter((k) => slots[k] && !state.stolenIds.includes(slots[k].id));
+  },
+
+  canSteal() {
+    return state.phase === 'draft' && this.me().steals > 0 && this.stealableKeys().length > 0;
+  },
+
+  startSteal(byCpu = false) {
+    if (this.blocked(byCpu) || !this.canSteal()) return;
+    state.steal = { targetKey: null };
+    render();
+  },
+
+  cancelSteal() {
+    if (this.blocked(false)) return;
+    state.steal = null;
+    render();
+  },
+
+  /** Paso 1 del robo: elegir qué personaje del rival quedarse. */
+  pickStealTarget(key, byCpu = false) {
+    if (this.blocked(byCpu)) return;
+    if (!state.steal || !this.stealableKeys().includes(key)) return;
+    state.steal.targetKey = key;
+    render();
+  },
+
+  /** Paso 2 del robo: intercambio. Robado -> mi slot; mi carta -> slot del rival. */
+  completeSteal(myKey) {
+    const me = this.me(), rival = this.rival();
+    const targetKey = state.steal.targetKey;
+    const stolen = rival.slots[targetKey];
+    const given = state.currentCharacter;
+
+    me.slots[myKey] = stolen;
+    rival.slots[targetKey] = given;
+    me.steals--;
+    state.stolenIds.push(stolen.id);
+
+    const cat = CATEGORIES.find((c) => c.key === targetKey);
+    state.notice = `🗡 ${PLAYER_META[state.currentPlayer].name} robó a ${stolen.name}. `
+      + `${PLAYER_META[1 - state.currentPlayer].name} recibe a ${given.name} en ${cat.icon} ${cat.label}.`;
+    state.steal = null;
+  },
+
+  /** Avanzar turno: J1 -> J2 -> siguiente ronda (o batalla). */
+  endTurn() {
+    if (state.currentPlayer === 0) {
+      state.currentPlayer = 1;
+    } else {
+      state.currentPlayer = 0;
+      state.round++;
+    }
+
+    if (state.round > TOTAL_ROUNDS) {
+      state.currentCharacter = null;
+      state.phase = 'battle';
+    } else {
+      this.drawCharacter();
+    }
+    render();
+    if (state.phase === 'draft' && this.isCpuTurn()) CPU.takeTurn();
+  },
+
+  /** Revancha con el mismo modo y dificultad. */
+  rematch() {
+    this.start(state.mode, state.difficulty);
+  },
+
+  restart() {
+    state = createInitialState();
+    render();
+  },
+};
+
+/* =========================================================================
+ * 4b. CPU (modo 1 jugador)
+ *     La CPU "conoce" el anime como un fan: recuerda cada estadística con un
+ *     error que depende de la dificultad. Con esos valores estima, para cada
+ *     jugada posible, cuántas categorías espera ganar y elige la mejor.
+ * ========================================================================= */
+const CPU = {
+  THINK_MS: 1100,  // pausa entre pasos para que el jugador vea qué hace
+
+  /** Valores percibidos por la CPU: { [id]: { fuerza, ... } } fijos durante la partida. */
+  buildPerception(difficulty) {
+    const { noise } = DIFFICULTIES[difficulty];
+    const map = {};
+    CHARACTER_POOL.forEach((ch) => {
+      map[ch.id] = {};
+      CATEGORIES.forEach(({ key }) => {
+        const v = ch.stats[key] + (Math.random() * 2 - 1) * noise;
+        map[ch.id][key] = Math.max(1, Math.min(100, Math.round(v)));
+      });
+    });
+    return map;
+  },
+
+  see(ch, key) { return state.cpu[ch.id][key]; },
+
+  /** Fracción de personajes del pool con menos de v en la categoría (empates cuentan la mitad). */
+  cdf(key, v) {
+    let below = 0;
+    for (const ch of CHARACTER_POOL) {
+      const s = this.see(ch, key);
+      below += s < v ? 1 : s === v ? 0.5 : 0;
+    }
+    return below / CHARACTER_POOL.length;
+  },
+
+  /** Probabilidad estimada de ganar una categoría (null = slot aún vacío). */
+  odds(key, mine, theirs) {
+    if (mine == null && theirs == null) return 0.5;
+    if (theirs == null) return this.cdf(key, mine);       // contra una carta futura al azar
+    if (mine == null) return 1 - this.cdf(key, theirs);   // mi carta futura contra la suya
+    return 1 / (1 + Math.exp(-(mine - theirs) / 4));       // ambos conocidos
+  },
+
+  /** Categorías que la CPU espera ganar con estos equipos. */
+  evaluate(mySlots, rivalSlots) {
+    return CATEGORIES.reduce((sum, { key }) => {
+      const m = mySlots[key] ? this.see(mySlots[key], key) : null;
+      const t = rivalSlots[key] ? this.see(rivalSlots[key], key) : null;
+      return sum + this.odds(key, m, t);
+    }, 0);
+  },
+
+  /** Todas las jugadas posibles con la carta actual, de mejor a peor. */
+  options(card, allowSteal) {
+    const me = state.players[1].slots, rival = state.players[0].slots;
+    const empty = CATEGORIES.map((c) => c.key).filter((k) => !me[k]);
+    const list = empty.map((k) => ({ type: 'place', slot: k, score: this.evaluate({ ...me, [k]: card }, rival) }));
+
+    if (allowSteal && state.players[1].steals > 0) {
+      // El robo es de un solo uso: guardarlo vale más cuanto más partida queda
+      const reserve = 0.12 * (TOTAL_ROUNDS - state.round);
+      for (const t of Game.stealableKeys()) {
+        for (const k of empty) {
+          const score = this.evaluate({ ...me, [k]: rival[t] }, { ...rival, [t]: card }) - reserve;
+          list.push({ type: 'steal', target: t, slot: k, score });
+        }
+      }
+    }
+    return list.sort((a, b) => b.score - a.score);
+  },
+
+  /** ¿Merece la pena descartar? Compara con lo que daría, de media, una carta nueva. */
+  shouldDiscard(bestScore) {
+    const sample = shuffle(state.deck).slice(0, 25);
+    if (!sample.length) return false;
+    const expected = sample.reduce((s, c) => s + this.options(c, false)[0].score, 0) / sample.length;
+    const reserve = 0.05 + 0.05 * (TOTAL_ROUNDS - state.round);
+    return expected - bestScore > reserve;
+  },
+
+  /** Elige jugada (con algún error aleatorio en dificultades bajas). */
+  decide(allowJokers) {
+    const opts = this.options(state.currentCharacter, allowJokers);
+    const { blunder } = DIFFICULTIES[state.difficulty];
+    if (Math.random() < blunder) {
+      const places = opts.filter((o) => o.type === 'place');
+      return places[Math.floor(Math.random() * places.length)];
+    }
+    return opts[0];
+  },
+
+  /** Turno completo de la CPU, paso a paso y con pausas visibles. */
+  async takeTurn() {
+    const game = state;                       // si la partida cambia, se aborta
+    const alive = () => state === game && state.phase === 'draft' && Game.isCpuTurn();
+    const { jokers } = DIFFICULTIES[state.difficulty];
+
+    state.busy = true;
+    state.notice = null;                      // el aviso del humano ya no aplica
+    render();
+    await wait(this.THINK_MS);
+    if (!alive()) return;
+
+    let move = this.decide(jokers);
+    if (jokers && Game.me().discards > 0 && move.type === 'place' && this.shouldDiscard(move.score)) {
+      Game.discard(true);                     // deja el aviso "CPU descartó a ..."
+      await wait(this.THINK_MS);
+      if (!alive()) return;
+      move = this.decide(jokers);
+    }
+
+    if (move.type === 'steal') {
+      Game.startSteal(true);
+      Game.pickStealTarget(move.target, true);
+      await wait(this.THINK_MS + 400);
+      if (!alive()) return;
+    }
+
+    state.busy = false;
+    Game.assignSlot(move.slot, true);
+  },
+};
+
+/* =========================================================================
+ * 5. SISTEMA DE COMBATE
+ * ========================================================================= */
+const Battle = {
+  /** Calcula todos los enfrentamientos de forma pura (sin tocar el DOM). */
+  compute(players) {
+    const wins = [0, 0];
+    const results = CATEGORIES.map((cat) => {
+      const c1 = players[0].slots[cat.key];
+      const c2 = players[1].slots[cat.key];
+      const v1 = c1.stats[cat.key];
+      const v2 = c2.stats[cat.key];
+      const winner = v1 > v2 ? 0 : v2 > v1 ? 1 : null; // null = empate
+      if (winner !== null) wins[winner]++;
+      return { cat, c1, c2, v1, v2, winner };
+    });
+
+    // Ganador al mejor de 5; si empatan en rondas, desempata la suma total.
+    let winner = null, tiebreak = false;
+    if (wins[0] !== wins[1]) {
+      winner = wins[0] > wins[1] ? 0 : 1;
+    } else {
+      const t1 = results.reduce((s, r) => s + r.v1, 0);
+      const t2 = results.reduce((s, r) => s + r.v2, 0);
+      tiebreak = true;
+      winner = t1 > t2 ? 0 : t2 > t1 ? 1 : null;
+    }
+    return { results, wins, winner, tiebreak };
+  },
+
+  /** Pausa dramática (se anula si el jugador pulsa "Saltar"). */
+  pause(ms) {
+    if (state.battle.skip) return Promise.resolve();
+    return new Promise((resolve) => {
+      const timer = setTimeout(resolve, ms);
+      this.wake = () => { clearTimeout(timer); resolve(); };
+    });
+  },
+
+  /** Acelera todo lo que queda de batalla, incluida la pausa en curso. */
+  skip() {
+    state.battle.skip = true;
+    if (this.wake) this.wake();
+  },
+
+  /** Una ronda completa: rótulo -> cara a cara -> revelación -> impacto. */
+  async playRound(r, i) {
+    Arena.intro(i, r.cat);
+    await this.pause(1400);
+    Arena.versus(r, i);
+    await this.pause(1300);
+    await Arena.countUp(r);
+    await this.pause(300);
+    Arena.clash(r);
+    await this.pause(1800);
+  },
+
+  /** Ejecuta la batalla completa con animación ronda por ronda. */
+  async run() {
+    if (state.busy) return;
+    state.busy = true;
+    const outcome = this.compute(state.players);
+    state.battle = { results: [], wins: [0, 0], winner: null, tiebreak: false, skip: false };
+    render();
+
+    for (const [i, r] of outcome.results.entries()) {
+      await this.playRound(r, i);
+      state.battle.results.push(r);
+      if (r.winner !== null) state.battle.wins[r.winner]++;
+      refreshBattleSide(r.winner);
+    }
+
+    Arena.verdictTeaser(outcome.tiebreak);
+    await this.pause(1800);
+    state.battle.winner = outcome.winner;
+    state.battle.tiebreak = outcome.tiebreak;
+    if (state.mode === 'solo') Record.add(state.difficulty, outcome.winner);
+    state.phase = 'result';
+    state.busy = false;
+    render();
+  },
+};
+
+const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+
+/* =========================================================================
+ * 6. RENDERIZADO (UI)
+ * ========================================================================= */
+const $app = document.getElementById('app');
+
+function render() {
+  const views = { start: viewStart, draft: viewDraft, battle: viewBattle, result: viewBattle };
+  $app.innerHTML = viewHeader() + views[state.phase]();
+}
+
+function viewHeader() {
+  return `
+    <header class="text-center mb-8">
+      <p class="font-display text-xs tracking-[.4em] text-slate-500 mb-2">// ANIME DRAFT PROTOCOL //</p>
+      <h1 class="font-display font-black text-3xl sm:text-5xl leading-tight">
+        <span class="glow-p1">CREA EL PERSONAJE</span><br/>
+        <span class="glow-p2">MÁS PODEROSO</span>
+      </h1>
+    </header>`;
+}
+
+function viewStart() {
+  return `
+    <section class="panel p-8 max-w-2xl mx-auto text-center pop-in">
+      <h2 class="font-display text-xl glow-accent mb-4">CÓMO SE JUEGA</h2>
+      <ol class="text-left space-y-2 text-lg mb-8 list-decimal list-inside text-slate-300">
+        <li>Son <b>5 rondas</b>. En cada ronda, cada jugador recibe un personaje <b>al azar</b>.</li>
+        <li>Asígnalo a una categoría libre: ${CATEGORIES.map(c => `${c.icon} ${c.label}`).join(', ')}.</li>
+        <li>Tu luchador hereda la estadística de ese personaje <b>solo</b> en esa categoría.</li>
+        <li>Las estadísticas están <b>ocultas</b> hasta la batalla: decide según lo que sabes del personaje.</li>
+        <li>Comodines (1 uso cada uno por partida):
+          <b>🎲 Descartar</b> tu carta y recibir otra, o <b>🗡 Robar</b> un personaje del rival:
+          tú te lo quedas y él recibe tu carta en ese slot. Un personaje robado ya no se puede volver a robar.</li>
+        <li>Al final, se comparan las 5 categorías. Gana el <b>mejor de 5</b>.</li>
+        <li>En <b>1 jugador</b>, la CPU recuerda las estadísticas como un fan: con mucho error en Fácil y casi exactas en Difícil.</li>
+      </ol>
+      <div class="flex flex-wrap justify-center gap-2 mb-4">${rarityLegend()}</div>
+      <p class="text-sm text-slate-500 mb-6">Pool: ${CHARACTER_POOL.length} personajes · Elige con cuidado: no sabes quién vendrá después.</p>
+      ${modeSelector()}
+    </section>`;
+}
+
+/** Selector de modo: 2 jugadores en la misma pantalla o 1 jugador contra la CPU. */
+function modeSelector() {
+  const diffBtn = (key) => {
+    const on = menu.difficulty === key;
+    return `<button onclick="setMenuDifficulty('${key}')" aria-pressed="${on}"
+      class="flex-1 px-2 py-2 border font-display text-xs tracking-widest transition
+      ${on ? 'border-pink-400 bg-pink-400 text-black' : 'border-slate-600 text-slate-400 hover:border-pink-400 hover:text-pink-300'}">
+      ${DIFFICULTIES[key].label.toUpperCase()}</button>`;
+  };
+  return `
+    <div class="grid sm:grid-cols-2 gap-4 text-left">
+      <div class="border border-cyan-400/50 bg-black/40 p-5 flex flex-col">
+        <p class="font-display font-bold glow-p1">👥 2 JUGADORES</p>
+        <p class="text-slate-400 text-sm mt-1 mb-4 flex-1">Misma pantalla, por turnos. Pasa el control a tu rival.</p>
+        <button onclick="Game.start('duo')" class="btn-neon w-full py-3 font-bold tracking-widest">JUGAR</button>
+      </div>
+      <div class="border border-pink-400/50 bg-black/40 p-5 flex flex-col">
+        <p class="font-display font-bold glow-p2">🤖 1 JUGADOR VS CPU</p>
+        <p class="text-slate-400 text-sm mt-1 mb-3">Elige la dificultad:</p>
+        <div class="flex gap-2 mb-2">${Object.keys(DIFFICULTIES).map(diffBtn).join('')}</div>
+        <p class="text-xs text-slate-500 mb-4 flex-1">Tu récord en ${DIFFICULTIES[menu.difficulty].label}: <b class="text-slate-300">${Record.text(menu.difficulty)}</b></p>
+        <button onclick="Game.start('solo', menu.difficulty)" class="btn-neon w-full py-3 font-bold tracking-widest">JUGAR</button>
+      </div>
+    </div>`;
+}
+
+function viewDraft() {
+  const p = PLAYER_META[state.currentPlayer];
+  const ch = state.currentCharacter;
+  const taken = state.players[state.currentPlayer].slots;
+
+  return `
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-6">
+      <div class="font-display text-sm tracking-widest text-slate-400">RONDA <span class="glow-accent text-2xl">${state.round}</span> / ${TOTAL_ROUNDS}</div>
+      <div class="font-display text-lg ${p.glow} flicker">▶ TURNO: ${p.name.toUpperCase()}${Game.isCpuTurn() ? ' · 🤖 PENSANDO…' : ''}</div>
+    </div>
+
+    ${state.notice ? `
+      <div class="pop-in mb-4 px-4 py-3 border border-yellow-300/60 bg-yellow-300/10 text-yellow-200 font-semibold text-center">
+        ${state.notice}
+      </div>` : ''}
+
+    <!-- Carta del personaje actual + selección de slot -->
+    <section class="panel ${p.border} border-2 p-6 mb-8 pop-in" key="${state.round}-${state.currentPlayer}">
+      <div class="grid md:grid-cols-2 gap-6 items-center">
+        <div class="flex gap-5 items-start">
+          <div class="rarity-glow ${ch.rarity.key === 'mitico' ? 'mythic' : ''}" style="--r:${ch.rarity.color}">
+            ${portrait(ch, 'w-28 h-40 sm:w-40 sm:h-56 text-4xl', ch.rarity.color)}
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs font-display tracking-widest text-slate-500">PERSONAJE ASIGNADO</p>
+            <div class="mt-2">${rarityBadge(ch)}</div>
+            <h2 class="font-display font-black text-2xl sm:text-3xl ${p.glow} mt-1 break-words">${ch.name}</h2>
+            <p class="text-slate-400 mb-4">${ch.anime}</p>
+            <div class="border border-dashed border-white/15 p-4 text-center">
+              <p class="font-display text-2xl tracking-[.3em] text-slate-500">???</p>
+              <p class="text-sm text-slate-500 mt-1">Estadísticas ocultas hasta la batalla. Confía en lo que sabes del anime.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          ${draftInstructions(p)}
+          <div class="grid gap-3">
+            ${CATEGORIES.map(c => slotButton(c, taken[c.key], ch, p)).join('')}
+          </div>
+          ${jokerButtons()}
+        </div>
+      </div>
+    </section>
+
+    <!-- Equipos de ambos jugadores -->
+    <section class="grid md:grid-cols-2 gap-6">
+      ${PLAYER_META.map(pm => teamPanel(pm)).join('')}
+    </section>`;
+}
+
+/** Insignia de rareza (el mítico lleva brillo animado). */
+function rarityBadge(ch) {
+  const r = ch.rarity;
+  return `<span class="rarity-badge ${r.key === 'mitico' ? 'mythic' : ''}" style="--r:${r.color}">${r.icon} ${r.label.toUpperCase()}</span>`;
+}
+
+/** Leyenda de rarezas con cuántos personajes hay de cada una. */
+function rarityLegend() {
+  return RARITIES.map((r) => {
+    const n = CHARACTER_POOL.filter((c) => c.rarity === r).length;
+    return `<span class="rarity-badge ${r.key === 'mitico' ? 'mythic' : ''}" style="--r:${r.color}">${r.icon} ${r.label.toUpperCase()} · ${n}</span>`;
+  }).join(' ');
+}
+
+/** <img> local del personaje (vacío si ya sabemos que no tiene archivo). */
+function imageTag(ch) {
+  const known = imageResolved.get(ch.slug);
+  if (known === -1) return '';
+  const ext = known ?? 0;
+  return `<img src="${IMAGE_DIR}${ch.slug}.${IMAGE_EXTENSIONS[ext]}" data-slug="${ch.slug}" data-ext="${ext}"
+    alt="${ch.name}" class="absolute inset-0 w-full h-full object-cover object-top"
+    onload="imageLoaded(this)" onerror="nextImageExt(this)" />`;
+}
+
+/** Retrato del personaje: avatar neón con iniciales + imagen local encima si existe. */
+function portrait(ch, sizeCls, color) {
+  const initials = ch.name.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean)
+    .map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  return `
+    <div class="portrait relative shrink-0 ${sizeCls}" style="border-color:${color}">
+      <div class="absolute inset-0 flex items-center justify-center font-display font-black"
+        style="color:${color};text-shadow:0 0 10px ${color}">${initials}</div>
+      ${imageTag(ch)}
+    </div>`;
+}
+
+/** Texto guía sobre los slots según el modo (normal o robo en curso). */
+function draftInstructions(p) {
+  const s = state.steal;
+  const cpu = Game.isCpuTurn();
+  if (cpu && s && s.targetKey) {
+    return `<div class="mb-3 px-3 py-2 border border-red-400/60 bg-red-500/10 text-red-200 text-sm">
+      🗡 ¡La CPU va a robarte a <b>${Game.rival().slots[s.targetKey].name}</b>! Recibirás a <b>${state.currentCharacter.name}</b> a cambio.</div>`;
+  }
+  if (cpu) return `<p class="text-xs font-display tracking-widest text-slate-500 mb-3">LA CPU ESTÁ ELIGIENDO…</p>`;
+  if (!s) return `<p class="text-xs font-display tracking-widest text-slate-500 mb-3">ELIGE UN SLOT VACÍO</p>`;
+  const rivalName = PLAYER_META[1 - state.currentPlayer].name;
+  const text = !s.targetKey
+    ? `🗡 Paso 1: elige en el panel de <b>${rivalName}</b> el personaje que quieres robar.`
+    : `🗡 Paso 2: elige tu slot vacío para <b>${Game.rival().slots[s.targetKey].name}</b>.
+       ${rivalName} recibirá a <b>${state.currentCharacter.name}</b> a cambio.`;
+  return `
+    <div class="mb-3 px-3 py-2 border border-red-400/60 bg-red-500/10 text-red-200 text-sm flex justify-between items-center gap-3">
+      <span>${text}</span>
+      <button onclick="Game.cancelSteal()" class="font-display text-xs tracking-widest text-slate-300 hover:text-white shrink-0">✕ CANCELAR</button>
+    </div>`;
+}
+
+/** Botones de los comodines del jugador en turno. */
+function jokerButtons() {
+  if (state.steal || Game.isCpuTurn()) return '';
+  const me = Game.me();
+  const btn = (label, uses, enabled, action, hint) => `
+    <button ${enabled ? `onclick="${action}"` : 'disabled'} title="${hint}"
+      class="joker-btn flex-1 px-3 py-2 border font-display text-xs tracking-widest
+      ${enabled ? 'border-yellow-300 text-yellow-300 hover:bg-yellow-300 hover:text-black' : 'border-slate-700 text-slate-600 cursor-not-allowed'}">
+      ${label} (${uses})
+    </button>`;
+  const stealHint = me.steals < 1 ? 'Ya usaste tu robo'
+    : Game.stealableKeys().length === 0 ? 'El rival no tiene personajes que se puedan robar' : 'Quédate un personaje del rival';
+  return `
+    <p class="text-xs font-display tracking-widest text-slate-500 mt-5 mb-2">COMODINES</p>
+    <div class="flex gap-3">
+      ${btn('🎲 DESCARTAR', me.discards, me.discards > 0, 'Game.discard()', me.discards > 0 ? 'Cambia tu carta por otra al azar' : 'Ya usaste tu descarte')}
+      ${btn('🗡 ROBAR', me.steals, Game.canSteal(), 'Game.startSteal()', stealHint)}
+    </div>`;
+}
+
+function slotButton(cat, assigned, ch, p) {
+  if (assigned) {
+    return `
+      <button disabled class="slot-btn w-full text-left px-4 py-3 border border-slate-700 bg-slate-900/60 opacity-40 line-through flex justify-between">
+        <span>${cat.icon} ${cat.label}</span><span class="text-sm">${assigned.name}</span>
+      </button>`;
+  }
+  // Durante el paso 1 del robo (o el turno de la CPU) los slots no se pueden pulsar
+  const waiting = (state.steal && !state.steal.targetKey) || Game.isCpuTurn();
+  const label = Game.isCpuTurn() ? '…' : state.steal ? 'COLOCAR ROBADO ▸' : 'ASIGNAR ▸';
+  return `
+    <button ${waiting ? 'disabled' : `onclick="Game.assignSlot('${cat.key}')"`}
+      class="slot-btn w-full text-left px-4 py-3 border-2 bg-black/40 flex justify-between items-center ${waiting ? 'opacity-40' : ''}"
+      style="border-color:${p.color};color:${p.color}">
+      <span class="font-bold">${cat.icon} ${cat.label}</span>
+      <span class="font-display text-sm opacity-70">${label}</span>
+    </button>`;
+}
+
+function teamPanel(pm) {
+  const slots = state.players[pm.id].slots;
+  const active = state.phase === 'draft' && state.currentPlayer === pm.id;
+  // Las estadísticas permanecen ocultas hasta que su ronda se combate.
+  const fought = new Set(state.battle.results.map((r) => r.cat.key));
+  const isRevealed = (key) => state.phase === 'result' || (state.phase === 'battle' && fought.has(key));
+  const revealedSum = CATEGORIES.reduce((s, c) => s + (slots[c.key] && isRevealed(c.key) ? slots[c.key].stats[c.key] : 0), 0);
+  const total = fought.size === 0 && state.phase !== 'result' ? '???'
+    : revealedSum + (CATEGORIES.every((c) => isRevealed(c.key)) ? '' : ' + ???');
+
+  // Robo en curso: el panel del rival se vuelve seleccionable
+  const isVictim = state.phase === 'draft' && state.steal && pm.id !== state.currentPlayer;
+  const stealable = isVictim ? Game.stealableKeys() : [];
+  const player = state.players[pm.id];
+  const jokers = state.phase === 'draft'
+    ? `<span class="text-xs text-slate-500" title="Comodines restantes">🎲${player.discards} · 🗡${player.steals}</span>` : '';
+
+  return `
+    <div class="panel p-5 ${active ? pm.border + ' border-2' : ''} ${isVictim ? 'border-2 border-red-400' : ''}">
+      <div class="flex justify-between items-baseline gap-2 mb-3">
+        <h3 class="font-display font-bold ${pm.glow}">${pm.name.toUpperCase()} ${jokers}</h3>
+        <span class="text-sm text-slate-400">Poder total: <b class="text-slate-100">${total}</b></span>
+      </div>
+      <ul class="space-y-2">
+        ${CATEGORIES.map(c => {
+          const ch = slots[c.key];
+          const canPick = stealable.includes(c.key);
+          const picked = isVictim && state.steal.targetKey === c.key;
+          const locked = ch && state.stolenIds.includes(ch.id);
+          const rowCls = canPick
+            ? `steal-target cursor-pointer ${picked ? 'bg-red-500/25 ring-2 ring-red-400' : 'hover:bg-red-500/15'}`
+            : (isVictim && ch ? 'opacity-50' : '');
+          return `<li ${canPick ? `onclick="Game.pickStealTarget('${c.key}')"` : ''}
+              class="flex justify-between items-center gap-2 border-b border-white/5 pb-1 px-1 min-h-[2.75rem] ${rowCls}">
+            <span class="text-slate-400 shrink-0">${c.icon} ${c.label}</span>
+            ${ch ? `<span class="flex items-center gap-2 min-w-0">${portrait(ch, 'w-9 h-9 text-xs', pm.color)}<span class="text-slate-200 truncate"><span style="color:${ch.rarity.color}" title="${ch.rarity.label}">${ch.rarity.icon}</span> ${ch.name}${locked ? ' <span title="Robado: ya no se puede volver a robar">🔒</span>' : ''}</span> <b style="color:${pm.color}">${isRevealed(c.key) ? ch.stats[c.key] : '??'}</b></span>`
+                 : `<span class="text-slate-600 italic">— vacío —</span>`}
+          </li>`;
+        }).join('')}
+      </ul>
+    </div>`;
+}
+
+/* ---------- Vista de batalla: marcador + arena + equipos + registro ---------- */
+function viewBattle() {
+  const started = state.busy || state.phase === 'result';
+  return `
+    <section id="scoreboard" class="mb-4">${scoreboard()}</section>
+
+    <section id="arena" class="panel relative overflow-hidden p-4 sm:p-8 mb-8 min-h-[24rem]">
+      ${state.phase === 'result' ? resultBanner() : !started ? battleReady() : ''}
+    </section>
+
+    <section id="teams" class="grid md:grid-cols-2 gap-6 mb-8">${teamsHtml()}</section>
+
+    <section class="panel p-6">
+      <h2 class="font-display text-lg glow-accent mb-4">⚔ REGISTRO DE BATALLA</h2>
+      <div id="battle-log" class="space-y-3">${logHtml()}</div>
+    </section>`;
+}
+
+const teamsHtml = () => PLAYER_META.map((pm) => teamPanel(pm)).join('');
+
+function logHtml() {
+  const res = state.battle.results;
+  return res.length
+    ? res.map((r, i) => roundRow(r, i)).join('')
+    : '<p class="text-slate-600 italic text-center">Aún no hay enfrentamientos.</p>';
+}
+
+/** Repinta marcador, equipos y registro sin tocar la arena (que está animándose). */
+function refreshBattleSide(bumpSide = null) {
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('scoreboard', scoreboard(bumpSide));
+  set('teams', teamsHtml());
+  set('battle-log', logHtml());
+}
+
+function scoreboard(bumpSide = null) {
+  const b = state.battle;
+  const pips = CATEGORIES.map((c, i) => {
+    const r = b.results[i];
+    const cls = !r
+      ? (state.busy && i === b.results.length ? 'bg-white animate-pulse' : 'bg-slate-700')
+      : r.winner === null ? 'bg-yellow-300' : r.winner === 0 ? 'bg-cyan-400' : 'bg-pink-400';
+    return `<span title="${c.label}" class="w-3 h-3 rotate-45 ${cls}"></span>`;
+  }).join('');
+  return `
+    <div class="panel px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+      <span class="font-display text-xs sm:text-sm glow-p1">${PLAYER_META[0].name.toUpperCase()}</span>
+      <div class="flex flex-col items-center gap-2">
+        <div class="font-display font-black text-3xl sm:text-4xl">
+          <span class="glow-p1 inline-block ${bumpSide === 0 ? 'bump' : ''}">${b.wins[0]}</span>
+          <span class="text-slate-600">:</span>
+          <span class="glow-p2 inline-block ${bumpSide === 1 ? 'bump' : ''}">${b.wins[1]}</span>
+        </div>
+        <div class="flex gap-3">${pips}</div>
+      </div>
+      <span class="font-display text-xs sm:text-sm glow-p2">${PLAYER_META[1].name.toUpperCase()}</span>
+    </div>
+    ${state.busy ? `
+      <div class="text-right mt-2">
+        <button onclick="Battle.skip()" class="text-xs font-display tracking-widest text-slate-500 hover:text-white">⏩ SALTAR ANIMACIÓN</button>
+      </div>` : ''}`;
+}
+
+function battleReady() {
+  return `
+    <div class="flex flex-col items-center justify-center min-h-[20rem] text-center">
+      <p class="font-display text-xs tracking-[.4em] text-slate-500 mb-3">LOS LUCHADORES ESTÁN LISTOS</p>
+      <p class="mb-8 text-lg text-slate-300">Las estadísticas se revelarán en cada enfrentamiento.</p>
+      <button onclick="Battle.run()" class="btn-neon px-10 py-4 text-lg font-bold tracking-widest">⚔ INICIAR BATALLA</button>
+    </div>`;
+}
+
+/* ---------- Arena: escenas animadas de cada ronda (manipula solo #arena) ---------- */
+const Arena = {
+  el: () => document.getElementById('arena'),
+
+  set(html) { const el = this.el(); if (el) el.innerHTML = html; },
+
+  /** Escena 1: rótulo de la ronda y la categoría. */
+  intro(i, cat) {
+    const label = i === TOTAL_ROUNDS - 1 ? '¡RONDA FINAL!' : `RONDA ${i + 1} / ${TOTAL_ROUNDS}`;
+    this.set(`
+      <div class="speedlines"></div>
+      <div class="relative flex flex-col items-center justify-center min-h-[20rem] text-center">
+        <p class="font-display tracking-[.5em] text-slate-300 slam">${label}</p>
+        <div class="text-7xl sm:text-8xl my-3 slam" style="animation-delay:.15s">${cat.icon}</div>
+        <h2 class="font-display font-black text-4xl sm:text-6xl glow-accent slam" style="animation-delay:.3s">${cat.label.toUpperCase()}</h2>
+      </div>`);
+  },
+
+  /** Escena 2: cara a cara, con las estadísticas aún ocultas. */
+  versus(r, i) {
+    this.set(`
+      <div class="speedlines"></div>
+      <div class="relative">
+        <p class="text-center font-display text-xs tracking-[.4em] text-slate-400 mb-4">
+          RONDA ${i + 1} · ${r.cat.icon} ${r.cat.label.toUpperCase()}
+        </p>
+        <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-6">
+          ${fighterCard(r.c1, 0)}
+          <div class="vs font-display font-black text-3xl sm:text-6xl text-white">VS</div>
+          ${fighterCard(r.c2, 1)}
+        </div>
+      </div>`);
+  },
+
+  /** Escena 3: los dos valores suben a la vez; el más bajo se detiene antes. */
+  countUp(r) {
+    const targets = [r.v1, r.v2];
+    const top = Math.max(r.v1, r.v2);
+    const duration = 1800;
+    const auras = [0, 1].map((s) => document.getElementById(`aura-${s}`));
+    auras.forEach((a) => a && a.classList.add('charging'));
+
+    return new Promise((resolve) => {
+      const t0 = performance.now();
+      const tick = (now) => {
+        const p = state.battle.skip ? 1 : Math.min(1, (now - t0) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        targets.forEach((target, s) => {
+          const v = Math.min(target, Math.round(top * eased));
+          const val = document.getElementById(`val-${s}`);
+          const bar = document.getElementById(`bar-${s}`);
+          if (val) val.textContent = v;
+          if (bar) bar.style.width = v + '%';
+          // Apaga el aura del que ya llegó a su tope
+          if (v === target && p > 0 && auras[s]) auras[s].classList.remove('charging');
+        });
+        if (p < 1) requestAnimationFrame(tick);
+        else resolve();
+      };
+      requestAnimationFrame(tick);
+    });
+  },
+
+  /** Escena 4: impacto, destello y veredicto de la ronda. */
+  clash(r) {
+    const arena = this.el();
+    if (!arena) return;
+    arena.classList.remove('big-shake');
+    void arena.offsetWidth; // reinicia la animación
+    arena.classList.add('big-shake');
+    arena.insertAdjacentHTML('beforeend', '<div class="flash"></div>');
+
+    [0, 1].forEach((s) => {
+      const f = document.getElementById(`fighter-${s}`);
+      if (!f || r.winner === null) return;
+      f.classList.add(r.winner === s ? 'winner' : 'loser');
+    });
+
+    const diff = Math.abs(r.v1 - r.v2);
+    const title = r.winner === null ? '¡CHOQUE IGUALADO!'
+      : diff >= 40 ? '¡DOMINACIÓN TOTAL!'
+      : diff >= 15 ? '¡GOLPE CRÍTICO!'
+      : diff <= 3 ? '¡POR LOS PELOS!'
+      : '¡VICTORIA!';
+    const pm = r.winner === null ? null : PLAYER_META[r.winner];
+    arena.insertAdjacentHTML('beforeend', `
+      <div class="stamp z-20 text-center pointer-events-none whitespace-nowrap">
+        <p class="font-display font-black text-3xl sm:text-6xl ${pm ? pm.glow : 'text-yellow-300'}"
+           style="-webkit-text-stroke:1px #000">${title}</p>
+        <p class="font-display text-xs sm:text-sm tracking-[.3em] mt-1 text-white">
+          ${pm ? `PUNTO PARA ${pm.name.toUpperCase()}` : 'NADIE PUNTÚA'}
+        </p>
+      </div>`);
+  },
+
+  /** Suspense antes del veredicto final. */
+  verdictTeaser(tiebreak) {
+    this.set(`
+      <div class="speedlines"></div>
+      <div class="relative flex flex-col items-center justify-center min-h-[20rem] text-center">
+        <p class="font-display tracking-[.5em] text-slate-300 slam">${tiebreak ? 'EMPATE EN RONDAS' : 'LA BATALLA HA TERMINADO'}</p>
+        <h2 class="font-display font-black text-3xl sm:text-5xl glow-accent slam mt-4" style="animation-delay:.25s">
+          ${tiebreak ? 'DECIDE EL PODER TOTAL...' : 'VEREDICTO FINAL...'}
+        </h2>
+      </div>`);
+  },
+};
+
+function fighterCard(ch, side) {
+  const pm = PLAYER_META[side];
+  return `
+    <div id="fighter-${side}" class="fighter flex flex-col items-center text-center min-w-0 ${side === 0 ? 'slide-l' : 'slide-r'}" style="--c:${pm.color}">
+      <p class="font-display text-[10px] sm:text-xs tracking-widest ${pm.glow} mb-2">${pm.name.toUpperCase()}</p>
+      <div id="aura-${side}" class="aura">${portrait(ch, 'w-24 h-32 sm:w-36 sm:h-48 text-3xl', pm.color)}</div>
+      <h3 class="font-display font-bold mt-3 text-xs sm:text-lg leading-tight break-words">${ch.name}</h3>
+      <p class="text-[11px] sm:text-xs text-slate-500">${ch.anime}</p>
+      <div class="mt-1">${rarityBadge(ch)}</div>
+      <div id="val-${side}" class="font-display font-black text-4xl sm:text-6xl mt-2 ${pm.glow}">??</div>
+      <div class="w-full max-w-[10rem] h-2 bg-slate-800 rounded mt-2">
+        <div id="bar-${side}" class="h-2 rounded" style="width:0%;background:${pm.color};box-shadow:0 0 10px ${pm.color}"></div>
+      </div>
+    </div>`;
+}
+
+function roundRow(r, i) {
+  const winCls = (side) => r.winner === side ? 'font-black' : 'opacity-50';
+  const verdict = r.winner === null
+    ? '<span class="text-yellow-300">EMPATE</span>'
+    : `<span class="${PLAYER_META[r.winner].glow}">GANA ${PLAYER_META[r.winner].name.toUpperCase()}</span>`;
+  const isNew = state.busy && i === state.battle.results.length - 1;
+  return `
+    <div class="${isNew ? 'pop-in' : ''} border border-white/10 bg-black/40 p-4">
+      <div class="flex justify-between text-xs font-display tracking-widest text-slate-500 mb-2">
+        <span>RONDA ${i + 1} · ${r.cat.icon} ${r.cat.label.toUpperCase()}</span>${verdict}
+      </div>
+      <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div class="${winCls(0)} min-w-0">
+          <div class="flex items-center gap-2">${portrait(r.c1, 'w-10 h-10 text-xs', 'var(--p1)')}<div class="text-sm truncate">${r.c1.name}</div></div>
+          <div class="h-3 bg-slate-800 rounded mt-1"><div class="h-3 rounded" style="width:${r.v1}%;background:var(--p1);box-shadow:0 0 10px var(--p1)"></div></div>
+        </div>
+        <div class="font-display text-lg whitespace-nowrap"><span class="glow-p1">${r.v1}</span> <span class="text-slate-600">vs</span> <span class="glow-p2">${r.v2}</span></div>
+        <div class="${winCls(1)} text-right min-w-0">
+          <div class="flex flex-row-reverse items-center gap-2">${portrait(r.c2, 'w-10 h-10 text-xs', 'var(--p2)')}<div class="text-sm truncate">${r.c2.name}</div></div>
+          <div class="h-3 bg-slate-800 rounded mt-1 flex justify-end"><div class="h-3 rounded" style="width:${r.v2}%;background:var(--p2);box-shadow:0 0 10px var(--p2)"></div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/** Pantalla final: campeón, su equipo completo y opción de revancha. */
+function resultBanner() {
+  const b = state.battle;
+  const pm = b.winner === null ? null : PLAYER_META[b.winner];
+  const totals = state.players.map((p) => CATEGORIES.reduce((s, c) => s + p.slots[c.key].stats[c.key], 0));
+  const solo = state.mode === 'solo';
+  const title = !pm ? '<span class="text-yellow-300">¡EMPATE ABSOLUTO!</span>'
+    : solo && b.winner === 0 ? `<span class="${pm.glow}">¡VICTORIA!</span>`
+    : solo ? `<span class="${pm.glow}">¡DERROTA! LA CPU GANA</span>`
+    : `<span class="${pm.glow}">¡${pm.name.toUpperCase()} GANA!</span>`;
+  const soloInfo = solo
+    ? `<p class="text-xs text-slate-500 mt-2">CPU ${DIFFICULTIES[state.difficulty].label} · Tu récord: ${Record.text(state.difficulty)}</p>` : '';
+  const note = b.tiebreak
+    ? `Empate en rondas — decidido por poder total: ${totals[0]} vs ${totals[1]}.`
+    : `Poder total: ${totals[0]} vs ${totals[1]}`;
+
+  // Marcador final en formato "3/5" por jugador
+  const ties = TOTAL_ROUNDS - b.wins[0] - b.wins[1];
+  const playerScore = (id) => `
+    <div class="text-center">
+      <p class="text-xs tracking-widest ${PLAYER_META[id].glow}">${PLAYER_META[id].name.toUpperCase()}</p>
+      <p class="text-4xl sm:text-6xl font-black ${PLAYER_META[id].glow}">${b.wins[id]}/${TOTAL_ROUNDS}</p>
+      <p class="text-[11px] text-slate-500 tracking-widest">RONDAS GANADAS</p>
+    </div>`;
+  const scoreLine = `
+    <div class="flex justify-center items-center gap-5 sm:gap-10 mt-8 font-display">
+      ${playerScore(0)}
+      <span class="text-slate-600 text-xl sm:text-2xl">VS</span>
+      ${playerScore(1)}
+    </div>
+    ${ties ? `<p class="text-yellow-300 text-sm mt-2">${ties} ronda${ties > 1 ? 's' : ''} empatada${ties > 1 ? 's' : ''}</p>` : ''}`;
+
+  // Desglose: quién ganó cada categoría
+  const side = (r, id) => r.winner === id ? `font-bold ${PLAYER_META[id].glow}` : r.winner === null ? 'text-yellow-200' : 'text-slate-500';
+  const breakdown = `
+    <div class="max-w-xl mx-auto mt-5 text-sm border border-white/10 bg-black/40 divide-y divide-white/5">
+      ${b.results.map((r) => `
+        <div class="grid grid-cols-[1fr_2.5rem_auto_2.5rem_1fr] items-center gap-2 px-3 py-2">
+          <span class="text-right truncate ${side(r, 0)}">${r.winner === 0 ? '✔ ' : ''}${r.c1.name}</span>
+          <span class="text-right font-display ${side(r, 0)}">${r.v1}</span>
+          <span class="text-slate-400 text-xs whitespace-nowrap" title="${r.cat.label}">${r.cat.icon} ${r.cat.label}</span>
+          <span class="text-left font-display ${side(r, 1)}">${r.v2}</span>
+          <span class="text-left truncate ${side(r, 1)}">${r.c2.name}${r.winner === 1 ? ' ✔' : ''}</span>
+        </div>`).join('')}
+    </div>`;
+  const team = pm ? `
+    <div class="flex justify-center gap-2 sm:gap-4 mt-6 flex-wrap">
+      ${CATEGORIES.map((c, i) => {
+        const ch = state.players[b.winner].slots[c.key];
+        return `<div class="pop-in flex flex-col items-center" style="animation-delay:${0.4 + i * 0.12}s">
+          ${portrait(ch, 'w-14 h-20 sm:w-20 sm:h-28 text-sm', pm.color)}
+          <span class="text-[11px] text-slate-400 mt-1">${c.icon} ${ch.stats[c.key]}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+  return `
+    <div class="speedlines"></div>
+    <div class="flash"></div>
+    <div class="relative text-center py-4">
+      <p class="font-display text-xs tracking-[.4em] text-slate-400">— VEREDICTO FINAL —</p>
+      <h2 class="font-display font-black text-4xl sm:text-6xl my-3 slam">${title}</h2>
+      ${pm ? `<p class="font-display tracking-[.3em] text-sm text-slate-300">EL PERSONAJE MÁS PODEROSO</p>` : ''}
+      ${team}
+      ${scoreLine}
+      ${breakdown}
+      <p class="text-slate-400 mt-4">${note}</p>
+      ${soloInfo}
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <button onclick="Game.rematch()" class="btn-neon px-8 py-3 font-bold tracking-widest">↻ REVANCHA</button>
+        <button onclick="Game.restart()" class="px-6 py-3 border border-slate-600 text-slate-400 hover:text-white hover:border-white font-display text-sm tracking-widest">MENÚ</button>
+      </div>
+    </div>`;
+}
+
+/* =========================================================================
+ * 7. ARRANQUE
+ * ========================================================================= */
+render();
+</script>
+</body>
+</html>
