@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crea el Personaje de Anime Más Poderoso</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CSS de Tailwind ya compilado (antes se generaba en el navegador con cdn.tailwindcss.com).
+       Si agregas clases nuevas de Tailwind, regenéralo con: npm run build:css -->
+  <link rel="stylesheet" href="tailwind.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -28,9 +32,9 @@
     .glow-p2 { color: var(--p2); text-shadow: 0 0 8px var(--p2), 0 0 20px rgba(244,114,182,.5); }
     .glow-accent { color: var(--accent); text-shadow: 0 0 8px var(--accent); }
     .panel {
-      background: rgba(15, 10, 35, .75);
+      /* Sin backdrop-filter: el desenfoque era de lo más costoso; un fondo más opaco da el mismo efecto */
+      background: rgba(15, 10, 35, .88);
       border: 1px solid rgba(255,255,255,.08);
-      backdrop-filter: blur(6px);
       clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
     }
     .border-p1 { border-color: var(--p1); box-shadow: 0 0 18px rgba(34,211,238,.35) inset; }
@@ -59,14 +63,16 @@
     }
     .rarity-glow { line-height: 0; box-shadow: 0 0 16px var(--r), 0 0 34px rgba(0,0,0,0); }
     @keyframes mythicHue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
-    .rarity-badge.mythic { animation: mythicHue 3s linear infinite; }
-    @keyframes mythicGlow {
-      0%, 100% { box-shadow: 0 0 18px #f43f5e, 0 0 40px rgba(244,63,94,.5); }
-      33%      { box-shadow: 0 0 18px #a855f7, 0 0 40px rgba(168,85,247,.5); }
-      66%      { box-shadow: 0 0 18px #facc15, 0 0 40px rgba(250,204,21,.5); }
+    .rarity-badge.mythic { animation: mythicHue 3s linear infinite; will-change: filter; }
+    /* Brillo mítico: la sombra es fija en una capa propia y solo se rota su tono
+       (animar box-shadow obligaba a repintar en cada fotograma) */
+    .rarity-glow.mythic { position: relative; isolation: isolate; box-shadow: none; }
+    .rarity-glow.mythic::before {
+      content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      box-shadow: 0 0 18px #f43f5e, 0 0 40px rgba(244,63,94,.5);
+      animation: mythicHue 2.4s linear infinite; will-change: filter;
     }
-    .rarity-glow.mythic { animation: mythicGlow 2.4s linear infinite; }
-    @media (prefers-reduced-motion: reduce) { .rarity-badge.mythic, .rarity-glow.mythic { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .rarity-badge.mythic, .rarity-glow.mythic::before { animation: none; } }
 
     /* ---- Arena de batalla ---- */
     @keyframes slam { 0% { opacity: 0; transform: scale(3); filter: blur(8px); } 60% { opacity: 1; transform: scale(.92); filter: none; } 100% { opacity: 1; transform: scale(1); } }
@@ -75,11 +81,16 @@
     @keyframes slideR { from { opacity: 0; transform: translateX(120%) skewX(12deg); } to { opacity: 1; transform: none; } }
     .slide-l { animation: slideL .6s cubic-bezier(.2,.9,.3,1.1) both; }
     .slide-r { animation: slideR .6s cubic-bezier(.2,.9,.3,1.1) both; }
-    @keyframes vsPulse { 0%,100% { transform: scale(1); text-shadow: 0 0 10px #fff, 0 0 30px var(--accent); } 50% { transform: scale(1.18); text-shadow: 0 0 20px #fff, 0 0 60px var(--accent); } }
-    .vs { animation: vsPulse .8s ease-in-out infinite; }
-    @keyframes aura { 0%,100% { box-shadow: 0 0 12px var(--c); } 50% { box-shadow: 0 0 40px var(--c), 0 0 80px var(--c); } }
-    .aura { line-height: 0; }
-    .aura.charging { animation: aura .45s ease-in-out infinite; }
+    /* Solo se anima transform/opacity (los acelera la GPU); las sombras quedan fijas */
+    @keyframes vsPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+    .vs { text-shadow: 0 0 14px #fff, 0 0 40px var(--accent); animation: vsPulse .8s ease-in-out infinite; will-change: transform; }
+    @keyframes aura { 0%,100% { opacity: .15; } 50% { opacity: 1; } }
+    .aura { line-height: 0; position: relative; isolation: isolate; }
+    .aura::after {
+      content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      box-shadow: 0 0 40px var(--c), 0 0 80px var(--c); opacity: 0;
+    }
+    .aura.charging::after { animation: aura .45s ease-in-out infinite; will-change: opacity; }
     .fighter { transition: transform .4s ease, filter .4s ease, opacity .4s ease; }
     .fighter.winner { transform: scale(1.1); filter: drop-shadow(0 0 18px var(--c)); }
     .fighter.loser { transform: scale(.92) translateY(6px); filter: grayscale(1) brightness(.55); opacity: .6; }
@@ -92,13 +103,13 @@
     .speedlines {
       position: absolute; inset: -50%; pointer-events: none;
       background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.06) 0deg 2deg, transparent 2deg 9deg);
-      animation: spin 24s linear infinite;
+      animation: spin 24s linear infinite; will-change: transform;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.7); } 100% { transform: scale(1); } }
     .bump { animation: bump .5s ease; }
     @media (prefers-reduced-motion: reduce) {
-      .speedlines, .vs, .aura.charging { animation: none; }
+      .speedlines, .vs, .aura.charging::after { animation: none; }
       .big-shake { animation: none; }
     }
     .btn-neon {
@@ -1005,7 +1016,7 @@ function imageTag(ch) {
   if (known === -1) return '';
   const ext = known ?? 0;
   return `<img src="${IMAGE_DIR}${ch.slug}.${IMAGE_EXTENSIONS[ext]}" data-slug="${ch.slug}" data-ext="${ext}"
-    alt="${ch.name}" class="absolute inset-0 w-full h-full object-cover object-top"
+    alt="${ch.name}" decoding="async" class="absolute inset-0 w-full h-full object-cover object-top"
     onload="imageLoaded(this)" onerror="nextImageExt(this)" />`;
 }
 
@@ -1249,7 +1260,7 @@ const Arena = {
           const val = document.getElementById(`val-${s}`);
           const bar = document.getElementById(`bar-${s}`);
           if (val) val.textContent = v;
-          if (bar) bar.style.width = v + '%';
+          if (bar) bar.style.transform = `scaleX(${v / 100})`;
           // Apaga el aura del que ya llegó a su tope
           if (v === target && p > 0 && auras[s]) auras[s].classList.remove('charging');
         });
@@ -1316,7 +1327,7 @@ function fighterCard(ch, side) {
       <div class="mt-1">${rarityBadge(ch)}</div>
       <div id="val-${side}" class="font-display font-black text-4xl sm:text-6xl mt-2 ${pm.glow}">??</div>
       <div class="w-full max-w-[10rem] h-2 bg-slate-800 rounded mt-2">
-        <div id="bar-${side}" class="h-2 rounded" style="width:0%;background:${pm.color};box-shadow:0 0 10px ${pm.color}"></div>
+        <div id="bar-${side}" class="h-2 rounded" style="width:100%;transform:scaleX(0);transform-origin:left;will-change:transform;background:${pm.color};box-shadow:0 0 10px ${pm.color}"></div>
       </div>
     </div>`;
 }
